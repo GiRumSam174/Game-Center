@@ -3,11 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Game Center v5.3</title>
+    <title>Game Center v5.4</title>
     <meta name="theme-color" content="#222">
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon-192.png">
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
@@ -83,7 +81,6 @@
         #ship-preview-grid { display: grid; gap: 1px; width: 55px; height: 55px; align-content: center; justify-content: center; background: rgba(0,0,0,0.2); border-radius: 4px; }
         .preview-cell { width: 9px; height: 9px; background-color: var(--bs-ship); border: 1px solid #999; }
 
-        /* RESPONSIVE LAYOUT */
         #bs-game-area { display: flex; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 1000px; gap: 10px; }
         .board-container { display: flex; flex-direction: column; align-items: center; }
         .board-title { margin-bottom: 5px; font-size: 1rem; color: #aaa; }
@@ -109,7 +106,6 @@
         }
         .bs-header-cell { display: flex; justify-content: center; align-items: center; color: #88ccee; font-weight: bold; font-size: 0.8rem; }
         
-        /* Scaling */
         @media (max-width: 450px) {
             .bs-grid { grid-template-columns: 20px repeat(10, 28px); grid-template-rows: 20px repeat(10, 28px); }
             .bs-cell { width: 28px; height: 28px; font-size: 16px; }
@@ -174,7 +170,22 @@
         .close-btn { position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; color: #888; }
         .p2p-btn { background: var(--accent-p2p); color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; margin-top: 10px; cursor: pointer; font-weight: bold; }
         .token-box { width: 100%; background: #111; border: 1px solid #444; color: #0f0; padding: 5px; margin: 10px 0; height: 60px; resize: none; font-family: monospace; }
-        #qrcode { background: white; padding: 10px; width: 220px; height: 220px; margin: 0 auto; }
+        
+        /* QR ZOOM FUNCTIONALITY */
+        #qrcode { 
+            background: white; padding: 10px; width: 220px; height: 220px; margin: 0 auto; 
+            cursor: zoom-in; transition: transform 0.2s; 
+        }
+        #qrcode.qr-fullscreen {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(1.5);
+            width: 300px; height: 300px; z-index: 5000; border: 5px solid white; 
+            box-shadow: 0 0 50px rgba(0,0,0,0.8); cursor: zoom-out;
+        }
+        /* Mobile Landscape Zoom fix */
+        @media (orientation: landscape) and (max-height: 500px) {
+            #qrcode.qr-fullscreen { width: 200px; height: 200px; transform: translate(-50%, -50%) scale(1); }
+        }
+
         #reader { width: 100%; height: 250px; background: black; margin-bottom: 10px; }
         .coffee-btn { display: inline-flex; align-items: center; justify-content: center; background: #FFDD00; color: #000; text-decoration: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; margin-top: 15px; font-size: 0.9rem; }
         .hidden { display: none !important; }
@@ -187,7 +198,7 @@
         <button class="menu-btn" onclick="launch('battleship')">Battleship</button>
         <button class="menu-btn" onclick="launch('gravitrips')">Gravitrips</button>
         <button class="menu-btn" onclick="launch('sos')">S O S</button>
-        <div style="margin-top:50px; color:#555; font-family:monospace;">v5.3</div>
+        <div style="margin-top:50px; color:#555; font-family:monospace;">v5.4</div>
     </div>
 
     <div id="game-ui" class="hidden" style="width:100%; max-width:1000px; display:flex; flex-direction:column; align-items:center;">
@@ -206,7 +217,7 @@
                     <span style="font-size:0.9rem; color:#aaa;">Next:</span>
                     <div id="ship-preview-grid"></div>
                 </div>
-                <button id="bs-rotate-btn" class="mini-btn primary"> Rotate</button>
+                <button id="bs-rotate-btn" class="mini-btn primary">↻ Rotate</button>
                 <button id="bs-reset-btn" class="mini-btn primary hidden">Play Again</button>
             </div>
 
@@ -260,11 +271,11 @@
             <span class="close-btn" onclick="closeModals()">&times;</span>
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #555; padding-bottom:10px; margin-bottom:15px;">
                 <h2 style="margin:0; color:#88ccee;">P2P and Stats</h2>
-                <span style="font-family:monospace; color:#666;">v5.3</span>
+                <span style="font-family:monospace; color:#666;">v5.4</span>
             </div>
             <div id="stats-area" style="background:#111; padding:10px; margin-bottom:15px;">Stats: 0/0</div>
             <button class="p2p-btn" onclick="openP2P()">Start P2P Link</button>
-            <a href="https://www.buymeacoffee.com/classmarks" target="_blank" class="coffee-btn"> Buy me a coffee</a>
+            <a href="https://www.buymeacoffee.com/classmarks" target="_blank" class="coffee-btn">☕ Buy me a coffee</a>
         </div>
     </div>
 
@@ -273,14 +284,14 @@
             <span class="close-btn" onclick="closeModals()">&times;</span>
             <h2 style="margin-bottom:15px; color:var(--accent-p2p);">Mission Link</h2>
             <div style="text-align:left; margin-bottom:20px;">
-                <span style="color:#88ccee; font-weight:bold;">1. YOUR CODE</span>
-                <div id="qrcode"></div>
+                <span style="color:#88ccee; font-weight:bold;">1. YOUR CODE (Tap to Zoom)</span>
+                <div id="qrcode" onclick="toggleQRZoom()"></div>
                 <textarea id="local-token" class="token-box" readonly onclick="this.select()"></textarea>
             </div>
             <div style="text-align:left; border-top:1px solid #444; padding-top:15px;">
                 <span style="color:#88ccee; font-weight:bold;">2. TARGET CODE</span>
                 <div id="reader" class="hidden"></div>
-                <button class="mini-btn" onclick="toggleScan()" style="width:100%; margin-bottom:5px; background:#444; font-size:1rem;"> Toggle Camera</button>
+                <button class="mini-btn" onclick="toggleScan()" style="width:100%; margin-bottom:5px; background:#444; font-size:1rem;">📷 Toggle Camera</button>
                 <textarea id="remote-token" class="token-box" placeholder="Paste friend's code..."></textarea>
                 <button class="p2p-btn" onclick="processRemote()">Connect</button>
             </div>
@@ -310,19 +321,16 @@
         notifyR: document.getElementById('notify-right')
     };
 
-    // Standardized Stats Keys (battleship, gravitrips, sos)
     const stats = {
         battleship: { p: parseInt(localStorage.getItem('bs_played')||0), w: parseInt(localStorage.getItem('bs_won')||0) },
         gravitrips: { p: parseInt(localStorage.getItem('grav_played')||0), w: parseInt(localStorage.getItem('grav_won')||0) },
         sos: { p: parseInt(localStorage.getItem('sos_played')||0), w: parseInt(localStorage.getItem('sos_won')||0) }
     };
 
-    // Service Worker Registration
+    // Service Worker
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js').then(reg => {
-                console.log('SW registered:', reg);
-            }).catch(err => console.log('SW failed:', err));
+            navigator.serviceWorker.register('sw.js').then(reg => console.log('SW registered')).catch(err => console.log('SW failed', err));
         });
     }
 
@@ -333,15 +341,12 @@
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
             gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.5);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.5);
         } catch(e) {}
     }
 
@@ -351,12 +356,9 @@
         views.ui.classList.remove('hidden');
         views.ui.style.display = 'flex'; 
         
-        // Reset Views
         views.notifyL.textContent = ""; views.notifyL.className = "notify-box";
         views.notifyR.textContent = ""; views.notifyR.className = "notify-box";
-        views.bs.classList.add('hidden');
-        views.grav.classList.add('hidden');
-        views.sos.classList.add('hidden');
+        views.bs.classList.add('hidden'); views.grav.classList.add('hidden'); views.sos.classList.add('hidden');
         views.resetBtn.classList.add('hidden');
 
         if(game === 'battleship') {
@@ -377,9 +379,7 @@
     }
 
     function attemptExit() {
-        if (gameInProgress) {
-            if(!confirm("Game in progress. Quit?")) return;
-        }
+        if (gameInProgress && !confirm("Game in progress. Quit?")) return;
         location.reload();
     }
     
@@ -389,7 +389,7 @@
     }
 
     function openOptions() {
-        if (!activeGame || !stats[activeGame]) return; // Safety check
+        if (!activeGame || !stats[activeGame]) return; 
         let s = stats[activeGame];
         document.getElementById('stats-area').textContent = `${activeGame.toUpperCase()} vs CPU: Won ${s.w} / ${s.p}`;
         document.getElementById('secret-modal').style.display = 'flex';
@@ -403,198 +403,115 @@
     let bs_ai = { mode:'HUNT', targets:[], firstHit:null };
 
     const bs_els = {
-        pGrid: document.getElementById('bs-player-grid'),
-        cGrid: document.getElementById('bs-cpu-grid'),
-        cContainer: document.getElementById('bs-cpu-board-container'),
-        controls: document.getElementById('bs-controls-container'),
-        rotate: document.getElementById('bs-rotate-btn'),
-        reset: document.getElementById('bs-reset-btn'),
-        preview: document.getElementById('ship-preview-grid'),
-        previewCont: document.getElementById('ship-preview-container')
+        pGrid: document.getElementById('bs-player-grid'), cGrid: document.getElementById('bs-cpu-grid'),
+        cContainer: document.getElementById('bs-cpu-board-container'), controls: document.getElementById('bs-controls-container'),
+        rotate: document.getElementById('bs-rotate-btn'), reset: document.getElementById('bs-reset-btn'),
+        preview: document.getElementById('ship-preview-grid'), previewCont: document.getElementById('ship-preview-container')
     };
 
     function bs_init(mode) {
         gameMode = mode; gameInProgress = false;
         bs_pBoard = bs_createBoard(); bs_cBoard = bs_createBoard();
-        bs_pFleet = []; bs_cFleet = []; 
-        bs_pShips = JSON.parse(JSON.stringify(BS_SHIPS_CFG)); 
-        bs_cShips = JSON.parse(JSON.stringify(BS_SHIPS_CFG));
+        bs_pFleet = []; bs_cFleet = []; bs_pShips = JSON.parse(JSON.stringify(BS_SHIPS_CFG)); bs_cShips = JSON.parse(JSON.stringify(BS_SHIPS_CFG));
         bs_state = 'placement'; bs_shipIdx = 0; bs_turn = true; bs_isHoriz = true; bs_p2pReady = false;
         bs_ai = { mode:'HUNT', targets:[], firstHit:null };
 
         views.notifyL.textContent = ""; views.notifyL.className="notify-box";
         views.notifyR.textContent = ""; views.notifyR.className="notify-box";
-
         bs_els.rotate.classList.remove('hidden'); bs_els.previewCont.classList.remove('hidden');
-        bs_els.reset.classList.add('hidden'); bs_els.controls.classList.remove('hidden');
-        bs_els.cContainer.classList.add('hidden');
-        
+        bs_els.reset.classList.add('hidden'); bs_els.controls.classList.remove('hidden'); bs_els.cContainer.classList.add('hidden');
         views.status.style.background = "#333"; views.status.textContent = "System Ready.";
         document.getElementById('enemy-board-title').textContent = mode==='cpu'?"Enemy Waters (CPU)":"Enemy Waters (P2P)";
         if(mode !== 'cpu') bs_turn = isHost;
 
-        bs_updateStatus(); bs_updatePreview(); bs_els.rotate.innerHTML = " Rotate";
+        bs_updateStatus(); bs_updatePreview(); bs_els.rotate.innerHTML = "↻ Rotate";
         bs_render(bs_els.pGrid, bs_pBoard, true); bs_render(bs_els.cGrid, bs_cBoard, false);
     }
-
     function bs_createBoard() { return Array(BS_SIZE).fill(null).map(()=>Array(BS_SIZE).fill(0)); }
     function bs_updateStatus() { if(bs_state==='placement') views.status.textContent = `Deploying: ${bs_pShips[bs_shipIdx].name} (${bs_pShips[bs_shipIdx].size})`; }
-    
     function bs_updatePreview() {
-        bs_els.preview.innerHTML = '';
-        if(bs_state!=='placement') { bs_els.previewCont.classList.add('hidden'); return; }
+        bs_els.preview.innerHTML = ''; if(bs_state!=='placement') { bs_els.previewCont.classList.add('hidden'); return; }
         const s = bs_pShips[bs_shipIdx].size;
         bs_els.preview.style.gridTemplateColumns = bs_isHoriz ? `repeat(${s}, 9px)` : `9px`;
         bs_els.preview.style.gridTemplateRows = bs_isHoriz ? `9px` : `repeat(${s}, 9px)`;
         for(let i=0; i<s; i++) { let d = document.createElement('div'); d.className='preview-cell'; bs_els.preview.appendChild(d); }
     }
-
     function bs_render(el, data, isP) {
-        el.innerHTML = ''; 
-        el.className = `bs-grid ${isP&&bs_state==='placement'?'placement-mode':''} ${!isP&&bs_state==='combat'?'combat-mode':''}`;
+        el.innerHTML = ''; el.className = `bs-grid ${isP&&bs_state==='placement'?'placement-mode':''} ${!isP&&bs_state==='combat'?'combat-mode':''}`;
         el.appendChild(bs_cDiv('bs-header-cell','')); ['A','B','C','D','E','F','G','H','I','J'].forEach(l=>el.appendChild(bs_cDiv('bs-header-cell',l)));
         for(let r=0; r<BS_SIZE; r++) {
             el.appendChild(bs_cDiv('bs-header-cell',r+1));
             for(let c=0; c<BS_SIZE; c++) {
                 let cell = document.createElement('div'); cell.className = 'bs-cell'; let v = data[r][c];
                 if(isP && v===1) cell.classList.add('ship'); if(v===2) cell.classList.add('miss'); if(v===3) cell.classList.add('ship','hit');
-                if(isP && bs_state==='placement') cell.onclick = ()=>bs_place(r,c);
-                else if(!isP && bs_state==='combat') cell.onclick = ()=>bs_attack(r,c);
+                if(isP && bs_state==='placement') cell.onclick = ()=>bs_place(r,c); else if(!isP && bs_state==='combat') cell.onclick = ()=>bs_attack(r,c);
                 el.appendChild(cell);
             }
         }
     }
     function bs_cDiv(c,t){let d=document.createElement('div');d.className=c;d.textContent=t;return d;}
-
     function bs_place(r, c) {
         if(bs_state!=='placement') return;
         const s = bs_pShips[bs_shipIdx].size;
         if(bs_canPlace(bs_pBoard,r,c,s,bs_isHoriz)) {
             let newShip = { name: bs_pShips[bs_shipIdx].name, size: s, hits: 0, coords: [] };
-            for(let i=0; i<s; i++) {
-                let rp = bs_isHoriz ? r : r+i; let cp = bs_isHoriz ? c+i : c;
-                bs_pBoard[rp][cp] = 1; newShip.coords.push({r:rp, c:cp});
-            }
+            for(let i=0; i<s; i++) { let rp = bs_isHoriz ? r : r+i; let cp = bs_isHoriz ? c+i : c; bs_pBoard[rp][cp] = 1; newShip.coords.push({r:rp, c:cp}); }
             bs_pFleet.push(newShip); bs_shipIdx++; bs_render(bs_els.pGrid, bs_pBoard, true);
             if(bs_shipIdx >= bs_pShips.length) {
-                bs_els.rotate.classList.add('hidden'); bs_els.previewCont.classList.add('hidden'); bs_els.controls.classList.add('hidden');
-                bs_els.cContainer.classList.remove('hidden');
+                bs_els.rotate.classList.add('hidden'); bs_els.previewCont.classList.add('hidden'); bs_els.controls.classList.add('hidden'); bs_els.cContainer.classList.remove('hidden');
                 if(gameMode==='cpu') { bs_state='combat'; gameInProgress = true; bs_cpuDeploy(); bs_render(bs_els.cGrid, bs_cBoard, false); views.status.textContent="Combat Active!"; }
                 else { views.status.textContent="Fleet Ready. Waiting for opponent..."; dataChan.send(JSON.stringify({type:'READY'})); bs_checkP2P(); }
             } else { bs_updateStatus(); bs_updatePreview(); }
         }
     }
     function bs_canPlace(b,r,c,s,h) {
-        if(h) { if(c+s>10)return false; for(let i=0;i<s;i++)if(b[r][c+i]!==0)return false; }
-        else { if(r+s>10)return false; for(let i=0;i<s;i++)if(b[r+i][c]!==0)return false; }
-        return true;
+        if(h) { if(c+s>10)return false; for(let i=0;i<s;i++)if(b[r][c+i]!==0)return false; } else { if(r+s>10)return false; for(let i=0;i<s;i++)if(b[r+i][c]!==0)return false; } return true;
     }
     function bs_cpuDeploy() {
-        bs_cShips.forEach(s => {
-            let placed=false; while(!placed) {
-                let r=Math.floor(Math.random()*10), c=Math.floor(Math.random()*10), h=Math.random()>.5;
-                if(bs_canPlace(bs_cBoard,r,c,s.size,h)) {
-                    let ns = { name: s.name, size: s.size, hits: 0, coords: [] };
-                    for(let i=0;i<s.size;i++) {
-                        let rp = h ? r : r+i; let cp = h ? c+i : c;
-                        bs_cBoard[rp][cp] = 1; ns.coords.push({r:rp, c:cp});
-                    }
-                    bs_cFleet.push(ns); placed=true;
-                }
-            }
-        });
+        bs_cShips.forEach(s => { let placed=false; while(!placed) { let r=Math.floor(Math.random()*10), c=Math.floor(Math.random()*10), h=Math.random()>.5; if(bs_canPlace(bs_cBoard,r,c,s.size,h)) { let ns = { name: s.name, size: s.size, hits: 0, coords: [] }; for(let i=0;i<s.size;i++) { let rp = h ? r : r+i; let cp = h ? c+i : c; bs_cBoard[rp][cp] = 1; ns.coords.push({r:rp, c:cp}); } bs_cFleet.push(ns); placed=true; }}}});
     }
-
     function bs_notifyGood(msg) { views.notifyR.textContent = msg; views.notifyR.classList.add('glow-green'); }
     function bs_notifyBad(msg) { views.notifyL.textContent = msg; views.notifyL.classList.add('glow-red'); }
-
     function bs_attack(r, c) {
         if(bs_state!=='combat' || !bs_turn) return; if(bs_cBoard[r][c]>1) return;
         if(gameMode==='cpu') {
-            let hit = bs_cBoard[r][c] === 1; let sunk = false; let sunkName = '';
-            bs_cBoard[r][c] = hit ? 3 : 2;
-            if(hit) {
-                let t = bs_cFleet.find(s=>s.coords.some(k=>k.r===r && k.c===c));
-                if(t) { t.hits++; if(t.hits>=t.size) { sunk=true; sunkName=t.name; playSinkSound(); } }
-            }
+            let hit = bs_cBoard[r][c] === 1; let sunk = false; let sunkName = ''; bs_cBoard[r][c] = hit ? 3 : 2;
+            if(hit) { let t = bs_cFleet.find(s=>s.coords.some(k=>k.r===r && k.c===c)); if(t) { t.hits++; if(t.hits>=t.size) { sunk=true; sunkName=t.name; playSinkSound(); }}}
             bs_render(bs_els.cGrid, bs_cBoard, false);
             if(hit && bs_cFleet.every(s=>s.hits>=s.size)) bs_end(true);
-            else { 
-                bs_turn=false; 
-                if(sunk) bs_notifyGood(`ENEMY ${sunkName} SUNK!`);
-                views.status.textContent = sunk ? `SUNK! ${sunkName}` : (hit?"HIT!":"Miss."); 
-                setTimeout(bs_cpuTurn, 1000); 
-            }
-        } else {
-            dataChan.send(JSON.stringify({type:'ATTACK',r,c})); bs_turn=false; views.status.textContent="Firing...";
-        }
+            else { bs_turn=false; if(sunk) bs_notifyGood(`ENEMY ${sunkName} SUNK!`); views.status.textContent = sunk ? `SUNK! ${sunkName}` : (hit?"HIT!":"Miss."); setTimeout(bs_cpuTurn, 1000); }
+        } else { dataChan.send(JSON.stringify({type:'ATTACK',r,c})); bs_turn=false; views.status.textContent="Firing..."; }
     }
-
     function bs_cpuTurn() {
         let r, c, coords;
-        if(bs_ai.mode === 'HUNT') coords = bs_randCoords();
-        else if(bs_ai.mode === 'TARGET' || bs_ai.mode === 'KILL') {
-            if(bs_ai.targets.length > 0) coords = bs_ai.targets.pop();
-            else { bs_ai.mode = 'HUNT'; coords = bs_randCoords(); }
-        }
-        if(bs_pBoard[coords.r][coords.c] > 1) { coords = bs_randCoords(); bs_ai.mode = 'HUNT'; }
-        r=coords.r; c=coords.c;
-        
-        let hit = bs_pBoard[r][c] === 1; let sunk = false; let sunkName = '';
-        bs_pBoard[r][c] = hit ? 3 : 2;
-        if(hit) {
-            let t = bs_pFleet.find(s=>s.coords.some(k=>k.r===r && k.c===c));
-            if(t) { t.hits++; if(t.hits>=t.size) { sunk=true; sunkName=t.name; playSinkSound(); } }
-            if(sunk) { 
-                bs_notifyBad(`LOST ${sunkName}!`);
-                bs_ai.mode='HUNT'; bs_ai.targets=[]; bs_ai.firstHit=null; 
-            } else {
-                if(bs_ai.mode==='HUNT') { bs_ai.mode='TARGET'; bs_ai.firstHit={r,c}; bs_addTargs(r,c); }
-                else if(bs_ai.mode==='TARGET') { bs_ai.mode='KILL'; bs_filterTargs(bs_ai.firstHit,{r,c}); bs_addNext(r,c,bs_ai.firstHit); }
-                else if(bs_ai.mode==='KILL') { bs_addNext(r,c,bs_ai.firstHit); }
-            }
-        }
+        if(bs_ai.mode === 'HUNT') coords = bs_randCoords(); else if(bs_ai.mode === 'TARGET' || bs_ai.mode === 'KILL') { if(bs_ai.targets.length > 0) coords = bs_ai.targets.pop(); else { bs_ai.mode = 'HUNT'; coords = bs_randCoords(); }}
+        if(bs_pBoard[coords.r][coords.c] > 1) { coords = bs_randCoords(); bs_ai.mode = 'HUNT'; } r=coords.r; c=coords.c;
+        let hit = bs_pBoard[r][c] === 1; let sunk = false; let sunkName = ''; bs_pBoard[r][c] = hit ? 3 : 2;
+        if(hit) { let t = bs_pFleet.find(s=>s.coords.some(k=>k.r===r && k.c===c)); if(t) { t.hits++; if(t.hits>=t.size) { sunk=true; sunkName=t.name; playSinkSound(); }}
+            if(sunk) { bs_notifyBad(`LOST ${sunkName}!`); bs_ai.mode='HUNT'; bs_ai.targets=[]; bs_ai.firstHit=null; } else { if(bs_ai.mode==='HUNT') { bs_ai.mode='TARGET'; bs_ai.firstHit={r,c}; bs_addTargs(r,c); } else if(bs_ai.mode==='TARGET') { bs_ai.mode='KILL'; bs_filterTargs(bs_ai.firstHit,{r,c}); bs_addNext(r,c,bs_ai.firstHit); } else if(bs_ai.mode==='KILL') { bs_addNext(r,c,bs_ai.firstHit); }}}
         bs_render(bs_els.pGrid, bs_pBoard, true);
-        if(hit && bs_pFleet.every(s=>s.hits>=s.size)) bs_end(false);
-        else { bs_turn=true; views.status.textContent = "Your Turn"; }
+        if(hit && bs_pFleet.every(s=>s.hits>=s.size)) bs_end(false); else { bs_turn=true; views.status.textContent = "Your Turn"; }
     }
-    
     function bs_randCoords() { let r,c,t=0; do{r=Math.floor(Math.random()*10);c=Math.floor(Math.random()*10);t++}while(bs_pBoard[r][c]>1&&t<200); return {r,c}; }
     function bs_addTargs(r,c) { [{r:-1,c:0},{r:1,c:0},{r:0,c:-1},{r:0,c:1}].sort(()=>Math.random()-.5).forEach(d=>{ let nr=r+d.r, nc=c+d.c; if(nr>=0&&nr<10&&nc>=0&&nc<10&&bs_pBoard[nr][nc]<2) bs_ai.targets.push({r:nr,c:nc}); }); }
     function bs_filterTargs(h1, h2) { let horiz = h1.r === h2.r; bs_ai.targets = bs_ai.targets.filter(t => horiz ? t.r===h1.r : t.c===h1.c); }
     function bs_addNext(cr, cc, orig) { let dr=0, dc=0; if(cr>orig.r)dr=1; else if(cr<orig.r)dr=-1; if(cc>orig.c)dc=1; else if(cc<orig.c)dc=-1; let nr=cr+dr, nc=cc+dc; if(nr>=0&&nr<10&&nc>=0&&nc<10&&bs_pBoard[nr][nc]<2) bs_ai.targets.push({r:nr,c:nc}); }
-
-    function bs_end(won) {
-        bs_state='gameover'; gameInProgress = false;
-        views.status.textContent = won ? "VICTORY!" : "DEFEAT!";
-        views.status.style.background = won ? "green" : "#b30000";
-        bs_els.reset.classList.remove('hidden'); bs_els.controls.classList.remove('hidden');
-        if(gameMode==='cpu') { stats.battleship.p++; if(won) stats.battleship.w++; localStorage.setItem('bs_played', stats.battleship.p); localStorage.setItem('bs_won', stats.battleship.w); }
-    }
+    function bs_end(won) { bs_state='gameover'; gameInProgress = false; views.status.textContent = won ? "VICTORY!" : "DEFEAT!"; views.status.style.background = won ? "green" : "#b30000"; bs_els.reset.classList.remove('hidden'); bs_els.controls.classList.remove('hidden'); if(gameMode==='cpu') { stats.battleship.p++; if(won) stats.battleship.w++; localStorage.setItem('bs_played', stats.battleship.p); localStorage.setItem('bs_won', stats.battleship.w); } }
 
     // --- GRAVITRIPS ---
     const G_ROWS = 6, G_COLS = 7;
     let grav_board=[], grav_turn=1, grav_myId=1, grav_locked=false;
-    
     function grav_init(mode) {
         gameMode = mode; grav_board = Array(G_ROWS).fill(null).map(()=>Array(G_COLS).fill(0));
         grav_locked = false; grav_myId = (mode==='p2p'&&!isHost) ? 2 : 1; grav_turn = 1; gameInProgress = false;
         let grid = document.getElementById('grav-grid'); grid.innerHTML='';
         for(let r=0;r<G_ROWS;r++) for(let c=0;c<G_COLS;c++) { let d=document.createElement('div'); d.className='grav-cell'; d.dataset.r=r; d.dataset.c=c; d.onclick=()=>grav_drop(c); grid.appendChild(d); }
         let arrows = document.getElementById('grav-arrows'); arrows.innerHTML='';
-        for(let c=0;c<G_COLS;c++) { let a=document.createElement('div'); a.className='grav-arrow'; a.textContent=''; a.onclick=()=>grav_drop(c); arrows.appendChild(a); }
+        for(let c=0;c<G_COLS;c++) { let a=document.createElement('div'); a.className='grav-arrow'; a.textContent='▼'; a.onclick=()=>grav_drop(c); arrows.appendChild(a); }
         grav_updStat();
     }
-    function grav_drop(col) {
-        if(grav_locked || grav_turn!==grav_myId) return;
-        for(let r=G_ROWS-1;r>=0;r--) { if(grav_board[r][col]===0) { gameInProgress = true; grav_anim(r,col,grav_myId); if(gameMode==='p2p') dataChan.send(JSON.stringify({type:'MOVE',col,p:grav_myId})); return; }}
-    }
-    function grav_anim(r,c,p) {
-        grav_locked = true; grav_board[r][c] = p;
-        let cell = document.querySelector(`.grav-cell[data-r="${r}"][data-c="${c}"]`);
-        cell.classList.add(p===1?'p1':'p2');
-        setTimeout(()=>{ if(grav_checkWin(p)) grav_end(p===grav_myId); else if(grav_board.every(row=>row.every(k=>k!==0))) { views.status.textContent="DRAW"; } else { grav_turn = p===1?2:1; grav_locked=false; grav_updStat(); if(gameMode==='cpu' && grav_turn===2) { grav_locked=true; setTimeout(grav_cpu, 500); }}},400);
-    }
+    function grav_drop(col) { if(grav_locked || grav_turn!==grav_myId) return; for(let r=G_ROWS-1;r>=0;r--) { if(grav_board[r][col]===0) { gameInProgress = true; grav_anim(r,col,grav_myId); if(gameMode==='p2p') dataChan.send(JSON.stringify({type:'MOVE',col,p:grav_myId})); return; }}}
+    function grav_anim(r,c,p) { grav_locked = true; grav_board[r][c] = p; let cell = document.querySelector(`.grav-cell[data-r="${r}"][data-c="${c}"]`); cell.classList.add(p===1?'p1':'p2'); setTimeout(()=>{ if(grav_checkWin(p)) grav_end(p===grav_myId); else if(grav_board.every(row=>row.every(k=>k!==0))) { views.status.textContent="DRAW"; } else { grav_turn = p===1?2:1; grav_locked=false; grav_updStat(); if(gameMode==='cpu' && grav_turn===2) { grav_locked=true; setTimeout(grav_cpu, 500); }}},400); }
     function grav_cpu() { let col = -1; for(let c=0; c<G_COLS; c++) if(grav_sim(c,2)) { col=c; break; } if(col<0) for(let c=0; c<G_COLS; c++) if(grav_sim(c,1)) { col=c; break; } if(col<0) { let a=[]; for(let c=0;c<G_COLS;c++) if(grav_board[0][c]===0) a.push(c); col=a[Math.floor(Math.random()*a.length)]; } for(let r=G_ROWS-1;r>=0;r--) if(grav_board[r][col]===0) { grav_anim(r,col,2); break; } }
     function grav_sim(c,p) { if(grav_board[0][c]!==0) return false; let r; for(r=G_ROWS-1;r>=0;r--) if(grav_board[r][c]===0) break; grav_board[r][c]=p; let w=grav_checkWin(p); grav_board[r][c]=0; return w; }
     function grav_checkWin(p) { for(let r=0;r<G_ROWS;r++) for(let c=0;c<G_COLS-3;c++) if(grav_board[r][c]==p&&grav_board[r][c+1]==p&&grav_board[r][c+2]==p&&grav_board[r][c+3]==p) return true; for(let r=0;r<G_ROWS-3;r++) for(let c=0;c<G_COLS;c++) if(grav_board[r][c]==p&&grav_board[r+1][c]==p&&grav_board[r+2][c]==p&&grav_board[r+3][c]==p) return true; for(let r=3;r<G_ROWS;r++) for(let c=0;c<G_COLS-3;c++) if(grav_board[r][c]==p&&grav_board[r-1][c+1]==p&&grav_board[r-2][c+2]==p&&grav_board[r-3][c+3]==p) return true; for(let r=0;r<G_ROWS-3;r++) for(let c=0;c<G_COLS-3;c++) if(grav_board[r][c]==p&&grav_board[r+1][c+1]==p&&grav_board[r+2][c+2]==p&&grav_board[r+3][c+3]==p) return true; return false; }
@@ -604,164 +521,58 @@
     // --- SOS ---
     const S_ROWS = 7, S_COLS = 8;
     let sos_board=[], sos_turn=1, sos_myId=1, sos_scores={1:0, 2:0}, sos_sel='S', sos_locked=false;
-    
     function sos_init(mode) {
         gameMode = mode; sos_board = Array(S_ROWS).fill(null).map(()=>Array(S_COLS).fill(null));
-        sos_locked = false; sos_myId = (mode==='p2p'&&!isHost) ? 2 : 1; sos_turn = 1; 
-        sos_scores={1:0, 2:0}; sos_sel='S'; gameInProgress = false;
-        
-        document.getElementById('sos-s1').textContent = "0"; document.getElementById('sos-s2').textContent = "0";
-        sos_setLetter('S'); sos_updStat();
-        
+        sos_locked = false; sos_myId = (mode==='p2p'&&!isHost) ? 2 : 1; sos_turn = 1; sos_scores={1:0, 2:0}; sos_sel='S'; gameInProgress = false;
+        document.getElementById('sos-s1').textContent = "0"; document.getElementById('sos-s2').textContent = "0"; sos_setLetter('S'); sos_updStat();
         const grid = document.getElementById('sos-grid'); grid.innerHTML = '';
-        for(let r=0;r<S_ROWS;r++) for(let c=0;c<S_COLS;c++) {
-            let d = document.createElement('div'); d.className='sos-cell'; d.dataset.r=r; d.dataset.c=c;
-            d.onclick=()=>sos_move(r,c); grid.appendChild(d);
-        }
+        for(let r=0;r<S_ROWS;r++) for(let c=0;c<S_COLS;c++) { let d = document.createElement('div'); d.className='sos-cell'; d.dataset.r=r; d.dataset.c=c; d.onclick=()=>sos_move(r,c); grid.appendChild(d); }
     }
-    
-    function sos_setLetter(l) { 
-        sos_sel = l; 
-        document.getElementById('btn-s').classList.toggle('active', l==='S');
-        document.getElementById('btn-o').classList.toggle('active', l==='O');
-    }
-
-    function sos_move(r, c) {
-        if(sos_locked || sos_board[r][c]!==null || sos_turn!==sos_myId) return;
-        gameInProgress = true;
-        sos_apply(r, c, sos_sel, sos_myId);
-        if(gameMode === 'p2p') dataChan.send(JSON.stringify({type:'SOS_MOVE', r, c, l:sos_sel, p:sos_myId}));
-    }
-
+    function sos_setLetter(l) { sos_sel = l; document.getElementById('btn-s').classList.toggle('active', l==='S'); document.getElementById('btn-o').classList.toggle('active', l==='O'); }
+    function sos_move(r, c) { if(sos_locked || sos_board[r][c]!==null || sos_turn!==sos_myId) return; gameInProgress = true; sos_apply(r, c, sos_sel, sos_myId); if(gameMode === 'p2p') dataChan.send(JSON.stringify({type:'SOS_MOVE', r, c, l:sos_sel, p:sos_myId})); }
     function sos_apply(r, c, l, p) {
-        sos_locked = true; sos_board[r][c] = l;
-        let cell = document.querySelector(`.sos-cell[data-r="${r}"][data-c="${c}"]`);
-        cell.textContent = l; cell.classList.add(`${l.toLowerCase()}-p${p}`);
-        
-        let pts = sos_checkPoints(r, c, l);
-        sos_scores[p] += pts;
-        document.getElementById(`sos-s${p}`).textContent = sos_scores[p];
-        
-        if(sos_board.every(row => row.every(cell => cell !== null))) {
-            sos_end();
-        } else {
-            if(pts === 0) sos_turn = (sos_turn===1)?2:1;
-            sos_updStat(); sos_locked = false;
-            if(gameMode === 'cpu' && sos_turn === 2) { sos_locked = true; setTimeout(sos_cpu, 500); }
-        }
+        sos_locked = true; sos_board[r][c] = l; let cell = document.querySelector(`.sos-cell[data-r="${r}"][data-c="${c}"]`); cell.textContent = l; cell.classList.add(`${l.toLowerCase()}-p${p}`);
+        let pts = sos_checkPoints(r, c, l); sos_scores[p] += pts; document.getElementById(`sos-s${p}`).textContent = sos_scores[p];
+        if(sos_board.every(row => row.every(cell => cell !== null))) { sos_end(); }
+        else { if(pts === 0) sos_turn = (sos_turn===1)?2:1; sos_updStat(); sos_locked = false; if(gameMode === 'cpu' && sos_turn === 2) { sos_locked = true; setTimeout(sos_cpu, 500); }}
     }
-
     function sos_checkPoints(r, c, l) {
-        let pts = 0;
-        const g = (rr, cc) => (rr>=0 && rr<S_ROWS && cc>=0 && cc<S_COLS) ? sos_board[rr][cc] : '';
-        if(l === 'S') {
-            const dirs = [[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]];
-            dirs.forEach(([dr, dc]) => { if(g(r+dr, c+dc) === 'O' && g(r+dr*2, c+dc*2) === 'S') pts++; });
-        } else { 
-            if(g(r, c-1)==='S' && g(r, c+1)==='S') pts++;
-            if(g(r-1, c)==='S' && g(r+1, c)==='S') pts++;
-            if(g(r-1, c-1)==='S' && g(r+1, c+1)==='S') pts++;
-            if(g(r-1, c+1)==='S' && g(r+1, c-1)==='S') pts++;
-        }
+        let pts = 0; const g = (rr, cc) => (rr>=0 && rr<S_ROWS && cc>=0 && cc<S_COLS) ? sos_board[rr][cc] : '';
+        if(l === 'S') { const dirs = [[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]]; dirs.forEach(([dr, dc]) => { if(g(r+dr, c+dc) === 'O' && g(r+dr*2, c+dc*2) === 'S') pts++; }); }
+        else { if(g(r, c-1)==='S' && g(r, c+1)==='S') pts++; if(g(r-1, c)==='S' && g(r+1, c)==='S') pts++; if(g(r-1, c-1)==='S' && g(r+1, c+1)==='S') pts++; if(g(r-1, c+1)==='S' && g(r+1, c-1)==='S') pts++; }
         return pts;
     }
-
     function sos_cpu() {
-        let best = null;
-        for(let r=0; r<S_ROWS; r++) { for(let c=0; c<S_COLS; c++) { if(sos_board[r][c] === null) {
-            sos_board[r][c] = 'S'; if(sos_checkPoints(r,c,'S') > 0) best = {r,c,l:'S'}; sos_board[r][c] = null; if(best) break;
-            sos_board[r][c] = 'O'; if(sos_checkPoints(r,c,'O') > 0) best = {r,c,l:'O'}; sos_board[r][c] = null; if(best) break;
-        }} if(best) break; }
-
-        if(!best) {
-            let empty = []; for(let r=0; r<S_ROWS; r++) for(let c=0; c<S_COLS; c++) if(sos_board[r][c]===null) empty.push({r,c});
-            let pick = empty[Math.floor(Math.random()*empty.length)];
-            best = {r:pick.r, c:pick.c, l: (Math.random()>.5?'S':'O')};
-        }
+        let best = null; for(let r=0; r<S_ROWS; r++) { for(let c=0; c<S_COLS; c++) { if(sos_board[r][c] === null) { sos_board[r][c] = 'S'; if(sos_checkPoints(r,c,'S') > 0) best = {r,c,l:'S'}; sos_board[r][c] = null; if(best) break; sos_board[r][c] = 'O'; if(sos_checkPoints(r,c,'O') > 0) best = {r,c,l:'O'}; sos_board[r][c] = null; if(best) break; }} if(best) break; }
+        if(!best) { let empty = []; for(let r=0; r<S_ROWS; r++) for(let c=0; c<S_COLS; c++) if(sos_board[r][c]===null) empty.push({r,c}); let pick = empty[Math.floor(Math.random()*empty.length)]; best = {r:pick.r, c:pick.c, l: (Math.random()>.5?'S':'O')}; }
         sos_apply(best.r, best.c, best.l, 2);
     }
-
-    function sos_updStat() {
-        if(sos_turn === sos_myId) { views.status.textContent = "YOUR TURN"; views.status.style.background = "#333"; }
-        else { views.status.textContent = gameMode==='cpu' ? "CPU TURN" : "OPPONENT TURN"; }
-    }
-
-    function sos_end() {
-        gameInProgress = false;
-        let won = sos_scores[1] > sos_scores[2]; let draw = sos_scores[1] === sos_scores[2];
-        if(draw) { views.status.textContent = "DRAW GAME!"; views.status.style.background = "#555"; }
-        else {
-            views.status.textContent = won ? "VICTORY!" : "DEFEAT!"; views.status.style.background = won ? "green" : "#b30000";
-            if(gameMode==='cpu') { stats.sos.p++; if(won) stats.sos.w++; localStorage.setItem('sos_played',stats.sos.p); localStorage.setItem('sos_won',stats.sos.w); }
-        }
-    }
+    function sos_updStat() { if(sos_turn === sos_myId) { views.status.textContent = "YOUR TURN"; views.status.style.background = "#333"; } else { views.status.textContent = gameMode==='cpu' ? "CPU TURN" : "OPPONENT TURN"; } }
+    function sos_end() { gameInProgress = false; let won = sos_scores[1] > sos_scores[2]; let draw = sos_scores[1] === sos_scores[2]; if(draw) { views.status.textContent = "DRAW GAME!"; views.status.style.background = "#555"; } else { views.status.textContent = won ? "VICTORY!" : "DEFEAT!"; views.status.style.background = won ? "green" : "#b30000"; if(gameMode==='cpu') { stats.sos.p++; if(won) stats.sos.w++; localStorage.setItem('sos_played',stats.sos.p); localStorage.setItem('sos_won',stats.sos.w); }}}
 
     // --- P2P ---
     function openP2P() {
-        closeModals(); document.getElementById('p2p-modal').style.display='flex';
-        isHost=true; setupWebRTC();
-        if(stats[activeGame]) {
-            let s = stats[activeGame];
-            document.getElementById('stats-area').textContent = `${activeGame.toUpperCase()} vs CPU: Won ${s.w} / ${s.p}`;
-        }
+        closeModals(); document.getElementById('p2p-modal').style.display='flex'; isHost=true; setupWebRTC();
+        if(stats[activeGame]) { let s = stats[activeGame]; document.getElementById('stats-area').textContent = `${activeGame.toUpperCase()} vs CPU: Won ${s.w} / ${s.p}`; }
     }
     function setupWebRTC() {
-        if(peerConn) peerConn.close();
-        peerConn = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-        peerConn.onicecandidate = e => { if(!e.candidate) { let t = btoa(JSON.stringify(peerConn.localDescription)); document.getElementById('local-token').value=t; new QRCode(document.getElementById('qrcode'),{text:t,width:220,height:220}); }};
+        if(peerConn) peerConn.close(); peerConn = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+        peerConn.onicecandidate = e => { if(!e.candidate) { let t = btoa(JSON.stringify(peerConn.localDescription)); document.getElementById('local-token').value=t; document.getElementById('qrcode').innerHTML = ""; new QRCode(document.getElementById('qrcode'),{text:t,width:512,height:512}); }};
         if(isHost) { dataChan = peerConn.createDataChannel("game"); setupChan(); peerConn.createOffer().then(d=>peerConn.setLocalDescription(d)); }
         else peerConn.ondatachannel = e => { dataChan = e.channel; setupChan(); };
     }
     function setupChan() {
         dataChan.onopen = () => { closeModals(); isP2P=true; if(activeGame==='battleship') bs_init('p2p'); else if(activeGame==='gravitrips') grav_init('p2p'); else sos_init('p2p'); };
-        dataChan.onmessage = e => {
-            let msg = JSON.parse(e.data);
-            if(activeGame==='battleship') bs_handleNet(msg);
-            else if(msg.type==='MOVE') { gameInProgress = true; for(let r=G_ROWS-1;r>=0;r--) if(grav_board[r][msg.col]===0) { grav_anim(r,msg.col,msg.p); break; } }
-            else if(msg.type==='SOS_MOVE') { gameInProgress = true; sos_apply(msg.r, msg.c, msg.l, msg.p); }
-        };
+        dataChan.onmessage = e => { let msg = JSON.parse(e.data); if(activeGame==='battleship') bs_handleNet(msg); else if(msg.type==='MOVE') { gameInProgress = true; for(let r=G_ROWS-1;r>=0;r--) if(grav_board[r][msg.col]===0) { grav_anim(r,msg.col,msg.p); break; }} else if(msg.type==='SOS_MOVE') { gameInProgress = true; sos_apply(msg.r, msg.c, msg.l, msg.p); }};
     }
-    function bs_checkP2P() { if(bs_shipIdx>=5 && bs_p2pReady) { bs_state='combat'; gameInProgress = true; bs_render(bs_els.cGrid, bs_cBoard, false); views.status.textContent=bs_turn?"YOUR TURN":"ENEMY TURN"; } }
-    function bs_handleNet(msg) {
-        if(msg.type==='READY') { bs_p2pReady=true; bs_checkP2P(); }
-        else if(msg.type==='ATTACK') {
-            let hit=false, sunk=false; let t=bs_pFleet.find(s=>s.coords.some(k=>k.r===msg.r && k.c===msg.c));
-            if(t && bs_pBoard[msg.r][msg.c]!==3) { bs_pBoard[msg.r][msg.c]=3; hit=true; t.hits++; if(t.hits>=t.size) { sunk=true; playSinkSound(); }}
-            else if(!t) bs_pBoard[msg.r][msg.c]=2;
-            bs_render(bs_els.pGrid, bs_pBoard, true);
-            dataChan.send(JSON.stringify({type:'RESULT',r:msg.r,c:msg.c,hit,sunk,sunkName:t?t.name:''}));
-            if(sunk) bs_notifyBad(`LOST ${t.name}!`);
-            if(bs_pFleet.every(s=>s.hits>=s.size)) { dataChan.send(JSON.stringify({type:'GAMEOVER'})); bs_end(false); } else { bs_turn=true; views.status.textContent="YOUR TURN"; }
-        }
-        else if(msg.type==='RESULT') {
-            bs_cBoard[msg.r][msg.c] = msg.hit?3:2; bs_render(bs_els.cGrid, bs_cBoard, false);
-            if(msg.sunk) { bs_notifyGood(`ENEMY ${msg.sunkName} SUNK!`); playSinkSound(); }
-            else if(msg.hit) views.status.textContent="HIT!"; else views.status.textContent="Miss.";
-        }
-        else if(msg.type==='GAMEOVER') bs_end(true);
-    }
-    function processRemote() {
-        let txt = document.getElementById('remote-token').value; if(!txt)return;
-        try {
-            let desc = JSON.parse(atob(txt));
-            if(desc.type==='offer') {
-                if(peerConn) peerConn.close(); isHost=false;
-                peerConn = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-                peerConn.onicecandidate = e => { if(!e.candidate) { let t = btoa(JSON.stringify(peerConn.localDescription)); document.getElementById('local-token').value=t; new QRCode(document.getElementById('qrcode'),{text:t,width:220,height:220}); }};
-                peerConn.ondatachannel = e => { dataChan = e.channel; setupChan(); };
-                peerConn.setRemoteDescription(desc); peerConn.createAnswer().then(d=>peerConn.setLocalDescription(d));
-            } else peerConn.setRemoteDescription(desc);
-        } catch(e){alert("Invalid Code");}
-    }
+    function processRemote() { try { let desc = JSON.parse(atob(document.getElementById('remote-token').value)); if(desc.type==='offer') { if(peerConn) peerConn.close(); isHost=false; peerConn = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }); peerConn.onicecandidate = e => { if(!e.candidate) { let t = btoa(JSON.stringify(peerConn.localDescription)); document.getElementById('local-token').value=t; document.getElementById('qrcode').innerHTML = ""; new QRCode(document.getElementById('qrcode'),{text:t,width:512,height:512}); }}; peerConn.ondatachannel = e => { dataChan = e.channel; setupChan(); }; peerConn.setRemoteDescription(desc); peerConn.createAnswer().then(d=>peerConn.setLocalDescription(d)); } else peerConn.setRemoteDescription(desc); } catch(e){alert("Invalid Code");} }
+    
     function toggleScan() {
         if(isScanning) { html5QrCode.stop(); isScanning=false; document.getElementById('reader').classList.add('hidden'); }
-        else {
-            document.getElementById('reader').classList.remove('hidden'); html5QrCode = new Html5Qrcode("reader");
-            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 200 }, (txt) => { document.getElementById('remote-token').value = txt; toggleScan(); processRemote(); });
-            isScanning=true;
-        }
+        else { document.getElementById('reader').classList.remove('hidden'); html5QrCode = new Html5Qrcode("reader"); html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 200 }, (txt) => { document.getElementById('remote-token').value = txt; toggleScan(); processRemote(); }); isScanning=true; }
     }
-    function closeModals() { document.querySelectorAll('.modal').forEach(m=>m.style.display='none'); if(isScanning) toggleScan(); }
+    function toggleQRZoom() { document.getElementById('qrcode').classList.toggle('qr-fullscreen'); }
+    function closeModals() { document.querySelectorAll('.modal').forEach(m=>m.style.display='none'); if(isScanning) toggleScan(); if(document.getElementById('qrcode').classList.contains('qr-fullscreen')) toggleQRZoom(); }
     bs_els.rotate.onclick = () => { bs_isHoriz = !bs_isHoriz; bs_updatePreview(); };
     bs_els.reset.onclick = () => bs_init(gameMode);
 
