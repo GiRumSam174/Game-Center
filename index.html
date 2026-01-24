@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Game Center v6.6</title>
+    <title>Game Center v6.7</title>
     <meta name="theme-color" content="#222">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -155,11 +155,17 @@
         
         .close-btn { position: sticky; top: 0; right: 0; float: right; font-size: 24px; cursor: pointer; color: #888; z-index: 1000; background: #333; padding-left: 10px; }
         .p2p-btn { background: var(--accent-p2p); color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; margin-top: 10px; cursor: pointer; font-weight: bold; }
+        
+        /* P2P ROLES */
+        .role-btn { display: block; width: 100%; padding: 15px; margin: 10px 0; background: #444; border: 1px solid #666; color: white; border-radius: 8px; font-size: 1.1rem; cursor: pointer; text-align: left; }
+        .role-btn:hover { background: #555; border-color: #888; }
+        .role-btn strong { display: block; color: var(--accent-p2p); margin-bottom: 4px; font-size: 1.2rem; }
+
         .token-box { width: 100%; background: #111; border: 1px solid #444; color: #0f0; padding: 5px; margin: 10px 0; height: 60px; resize: none; font-family: monospace; }
         
         /* --- QR CODE & READER --- */
         #qrcode { 
-            background: white; padding: 10px; width: 220px; height: 220px; margin: 0 auto; 
+            background: white; padding: 10px; width: 220px; height: 220px; margin: 10px auto; 
             cursor: zoom-in; transition: transform 0.2s; 
             display: flex; justify-content: center; align-items: center;
             color: black; font-weight: bold; position: relative;
@@ -167,25 +173,16 @@
         
         #qrcode img, #qrcode canvas { display: block; max-width: 100%; height: auto; }
 
-        /* QR FULLSCREEN FIX */
         #qrcode.qr-fullscreen {
-            position: fixed; 
-            top: 0; left: 0; 
-            width: 100vw; height: 100vh;
-            max-width: none; max-height: none; 
-            transform: none; 
-            z-index: 5000;
-            background: rgba(0,0,0,0.95); 
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
-            border: none; box-shadow: none;
-            cursor: zoom-out;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            max-width: none; max-height: none; transform: none; z-index: 5000;
+            background: rgba(0,0,0,0.95); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; border: none; box-shadow: none; cursor: zoom-out;
         }
         
         #qrcode.qr-fullscreen img, #qrcode.qr-fullscreen canvas {
             background: white; padding: 15px; border-radius: 5px;
-            max-width: 90vmin; max-height: 80vmin;
-            width: auto; height: auto;
+            max-width: 90vmin; max-height: 80vmin; width: auto; height: auto;
             border: 5px solid white;
         }
 
@@ -238,7 +235,7 @@
     <button class="menu-btn" onclick="launch('battleship')">Battleship</button>
     <button class="menu-btn" onclick="launch('gravitrips')">Gravitrips</button>
     <button class="menu-btn" onclick="launch('sos')">S O S</button>
-    <div style="margin-top:50px; color:#555; font-family:monospace;">v6.6</div>
+    <div style="margin-top:50px; color:#555; font-family:monospace;">v6.7</div>
 </div>
 
 <div id="game-ui" class="hidden" style="width:100%; max-width:1000px; display:flex; flex-direction:column; align-items:center;">
@@ -307,7 +304,7 @@
         <span class="close-btn" onclick="closeModals()">&times;</span>
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #555; padding-bottom:10px; margin-bottom:15px;">
             <h2 style="margin:0; color:#88ccee;">P2P and Stats</h2>
-            <span style="font-family:monospace; color:#666;">v6.6</span>
+            <span style="font-family:monospace; color:#666;">v6.7</span>
         </div>
         <div id="stats-area" style="background:#111; padding:10px; margin-bottom:15px;">Stats: 0/0</div>
         <button class="p2p-btn" onclick="openP2P()">Start P2P Game Link</button>
@@ -316,24 +313,52 @@
 </div>
 
 <div id="p2p-modal" class="modal">
-    <div class="modal-content" style="max-width:450px;">
+    <div class="modal-content" style="max-width:450px; text-align:left;">
         <span class="close-btn" onclick="closeModals()">&times;</span>
-        <h2 style="margin-bottom:15px; color:var(--accent-p2p);">P2P Game Link</h2>
-        <div style="text-align:left; margin-bottom:20px;">
-            <span style="color:#88ccee; font-weight:bold;">1. YOUR CODE (Tap to Zoom)</span>
+        <h2 style="margin-bottom:5px; color:var(--accent-p2p);">P2P Connection</h2>
+        
+        <div id="p2p-step-0">
+            <p style="color:#ccc; margin-bottom:20px;">To play with a friend nearby, choose your role:</p>
+            <button class="role-btn" onclick="p2p_setupP1()">
+                <strong>Player 1 (Host)</strong>
+                Creates the game. Shows code first.
+            </button>
+            <button class="role-btn" onclick="p2p_setupP2()">
+                <strong>Player 2 (Join)</strong>
+                Scans Player 1 to join.
+            </button>
+        </div>
+
+        <div id="p2p-step-p1-show" class="hidden">
+            <p style="color:#88ccee; font-weight:bold;">1. Show this to Player 2:</p>
             <div id="qrcode" onclick="toggleQRZoom()">
                 <span class="gen-anim">Generating...</span>
                 <div id="qr-hint">Tap anywhere to minimize</div>
             </div>
             <textarea id="local-token" class="token-box" readonly onclick="this.select()"></textarea>
+            <p style="text-align:center; font-size:0.9rem; color:#aaa;">Once Player 2 scans this...</p>
+            <button class="p2p-btn" onclick="p2p_p1_next()">Next: Scan Player 2's Answer</button>
         </div>
-        <div style="text-align:left; border-top:1px solid #444; padding-top:15px;">
-            <span style="color:#88ccee; font-weight:bold;">2. TARGET CODE</span>
+
+        <div id="p2p-scan-area" class="hidden">
+            <button class="mini-btn" onclick="p2p_back()" style="margin-bottom:10px;">&larr; Back</button>
+            <p id="scan-instr" style="color:#88ccee; font-weight:bold; margin-top:0;">2. Scan Opponent's Code:</p>
+            
             <button id="cam-toggle-btn" class="mini-btn" onclick="toggleScan()" style="width:100%; margin-bottom:10px; background:#444; font-size:1rem;">📷 Toggle Camera</button>
             <div id="reader" class="hidden"></div>
-            <textarea id="remote-token" class="token-box" placeholder="Paste friend's code..."></textarea>
-            <button class="p2p-btn" onclick="processRemote()">Connect</button>
+            
+            <div style="margin-top:10px; border-top:1px solid #444; padding-top:10px;">
+                <span style="font-size:0.8rem; color:#aaa;">Or paste text code:</span>
+                <textarea id="remote-token" class="token-box" placeholder="Paste code here..."></textarea>
+                <button class="p2p-btn" onclick="processRemote()">Connect / Generate</button>
+            </div>
         </div>
+
+        <div id="p2p-step-p2-show" class="hidden">
+            <p style="color:#00ff00; font-weight:bold;">3. Show this back to Player 1:</p>
+            <div id="qrcode-answer"></div> <p style="text-align:center; font-size:0.9rem; color:#aaa;">Waiting for P1 to confirm...</p>
+        </div>
+
     </div>
 </div>
 
@@ -772,23 +797,51 @@
         }
     }
 
-    // --- P2P SHARED LOGIC ---
+    // --- P2P WIZARD LOGIC ---
+    
     function openP2P() {
         closeModals(); 
         document.getElementById('p2p-modal').style.display='flex';
-        document.getElementById('qrcode').innerHTML = '<span class="gen-anim">Generating...</span><div id="qr-hint">Tap anywhere to minimize</div>';
-        isHost=true; 
-        setupWebRTC();
-        if(activeGame && stats[activeGame]) {
-            let s = stats[activeGame];
-            document.getElementById('stats-area').textContent = `${activeGame.toUpperCase()} vs CPU: Won ${s.w} / ${s.p}`;
-        }
+        // RESET WIZARD
+        document.getElementById('p2p-step-0').classList.remove('hidden');
+        document.getElementById('p2p-step-p1-show').classList.add('hidden');
+        document.getElementById('p2p-scan-area').classList.add('hidden');
+        document.getElementById('p2p-step-p2-show').classList.add('hidden');
+        
+        // Reset Inputs
+        document.getElementById('local-token').value = "";
+        document.getElementById('remote-token').value = "";
+        document.getElementById('qrcode').innerHTML = '<span class="gen-anim">Generating...</span>';
     }
 
-    // --- NEW: STRIP UNNECESSARY CANDIDATES (TCP, etc) ---
+    function p2p_setupP1() {
+        isHost = true;
+        document.getElementById('p2p-step-0').classList.add('hidden');
+        document.getElementById('p2p-step-p1-show').classList.remove('hidden');
+        setupWebRTC();
+    }
+
+    function p2p_setupP2() {
+        isHost = false;
+        document.getElementById('p2p-step-0').classList.add('hidden');
+        document.getElementById('p2p-scan-area').classList.remove('hidden');
+        document.getElementById('scan-instr').textContent = "1. Scan Player 1's Code:";
+    }
+
+    function p2p_p1_next() {
+        // P1 moves to scan phase
+        document.getElementById('p2p-step-p1-show').classList.add('hidden');
+        document.getElementById('p2p-scan-area').classList.remove('hidden');
+        document.getElementById('scan-instr').textContent = "2. Scan Player 2's Answer:";
+    }
+
+    function p2p_back() {
+        if(isScanning) toggleScan();
+        openP2P(); // Go back to start
+    }
+
     function cleanSDP(sdp) {
         return sdp.split('\r\n').filter(line => {
-            // Remove TCP candidates (usually redundant for game data and very long)
             if (line.indexOf('a=candidate') !== -1 && line.toLowerCase().indexOf('tcp') !== -1) return false;
             return true;
         }).join('\r\n');
@@ -800,24 +853,22 @@
         
         peerConn.onicecandidate = e => { 
             if(!e.candidate) { 
-                // CLEAN & COMPRESS OFFER
                 let descObj = peerConn.localDescription.toJSON();
-                descObj.sdp = cleanSDP(descObj.sdp); // Strip TCP
+                descObj.sdp = cleanSDP(descObj.sdp);
                 let json = JSON.stringify(descObj);
                 let compressed = LZString.compressToEncodedURIComponent(json);
-                document.getElementById('local-token').value = compressed; 
                 
-                let qrContainer = document.getElementById('qrcode');
-                qrContainer.innerHTML = '<div id="qr-hint">Tap anywhere to minimize</div>';
-                try {
-                    new QRCode(qrContainer, {
-                        text: compressed,
-                        width: 512,
-                        height: 512,
-                        correctLevel: QRCode.CorrectLevel.L
-                    });
-                } catch(err) {
-                    qrContainer.innerHTML += "Error generating QR";
+                // Show in the P1 box or the P2 answer box
+                if(isHost) {
+                    document.getElementById('local-token').value = compressed;
+                    let qrContainer = document.getElementById('qrcode');
+                    qrContainer.innerHTML = '<div id="qr-hint">Tap anywhere to minimize</div>';
+                    new QRCode(qrContainer, { text: compressed, width: 512, height: 512 });
+                } else {
+                    // P2 Generated Answer
+                    let qrContainer = document.getElementById('qrcode-answer');
+                    qrContainer.innerHTML = '<div id="qr-hint">Tap to Zoom</div>';
+                    new QRCode(qrContainer, { text: compressed, width: 512, height: 512 });
                 }
             }
         };
@@ -885,32 +936,38 @@
     function processRemote() {
         let txt = document.getElementById('remote-token').value; if(!txt)return;
         try {
-            // DECOMPRESS
             let decompressed = LZString.decompressFromEncodedURIComponent(txt);
             let desc = JSON.parse(decompressed);
 
             if(desc.type==='offer') {
+                // WE ARE PLAYER 2
                 if(peerConn) peerConn.close(); 
                 isHost=false;
                 peerConn = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
                 peerConn.onicecandidate = e => { 
                     if(!e.candidate) { 
-                        // CLEAN & COMPRESS ANSWER
                         let descObj = peerConn.localDescription.toJSON();
-                        descObj.sdp = cleanSDP(descObj.sdp); // Strip TCP
+                        descObj.sdp = cleanSDP(descObj.sdp);
                         let json = JSON.stringify(descObj);
                         let compressed = LZString.compressToEncodedURIComponent(json);
-                        document.getElementById('local-token').value = compressed; 
-
-                        document.getElementById('qrcode').innerHTML = '<div id="qr-hint">Tap anywhere to minimize</div>';
-                        new QRCode(document.getElementById('qrcode'),{text:compressed,width:512,height:512}); 
+                        
+                        // SWITCH UI TO STEP 3 (SHOW ANSWER)
+                        if(isScanning) toggleScan(); // Stop Camera
+                        document.getElementById('p2p-scan-area').classList.add('hidden');
+                        document.getElementById('p2p-step-p2-show').classList.remove('hidden');
+                        
+                        let qrContainer = document.getElementById('qrcode-answer');
+                        qrContainer.innerHTML = '<div id="qr-hint">Tap anywhere to minimize</div>';
+                        new QRCode(qrContainer, { text: compressed, width: 512, height: 512 });
                     }
                 };
                 peerConn.ondatachannel = e => { dataChan = e.channel; setupChan(); };
                 peerConn.setRemoteDescription(desc); 
                 peerConn.createAnswer().then(d=>peerConn.setLocalDescription(d));
             } else {
+                // WE ARE PLAYER 1 (FINAL STEP)
                 peerConn.setRemoteDescription(desc);
+                // Game will auto start when DataChannel opens
             }
         } catch(e) { 
             console.error(e); 
@@ -927,7 +984,6 @@
                 btn.textContent = "📷 Toggle Camera";
                 btn.classList.remove('active');
             }).catch(err => {
-                console.error("Failed to stop scanning", err);
                 isScanning = false;
                 document.getElementById('reader').classList.add('hidden');
                 btn.textContent = "📷 Toggle Camera";
@@ -935,9 +991,6 @@
         } else {
             document.getElementById('reader').classList.remove('hidden'); 
             html5QrCode = new Html5Qrcode("reader");
-            
-            // --- UPDATED QR BOX LOGIC ---
-            // Use 80% of screen width, max 350px
             let boxSize = Math.min(window.innerWidth * 0.8, 350);
 
             html5QrCode.start(
@@ -945,8 +998,7 @@
                 { fps: 10, qrbox: boxSize }, 
                 (txt) => { 
                     document.getElementById('remote-token').value = txt; 
-                    toggleScan(); 
-                    processRemote(); 
+                    processRemote(); // AUTO SUBMIT ON SCAN
                 }
             );
             isScanning = true;
@@ -957,6 +1009,11 @@
 
     function toggleQRZoom() {
         document.getElementById('qrcode').classList.toggle('qr-fullscreen');
+    }
+    
+    // Allow zooming the Answer QR too
+    document.getElementById('qrcode-answer').onclick = function() {
+        this.classList.toggle('qr-fullscreen');
     }
 
 </script>
