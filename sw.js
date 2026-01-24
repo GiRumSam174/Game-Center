@@ -1,4 +1,4 @@
-const CACHE_NAME = 'game-center-v5-4'; // Updated version number
+const CACHE_NAME = 'game-center-v5-5'; // Updated to match the new HTML version
 const urlsToCache = [
   './',
   './index.html',
@@ -9,6 +9,7 @@ const urlsToCache = [
 
 // Install event: Caches the files
 self.addEventListener('install', event => {
+  self.skipWaiting(); // Forces the new SW to activate immediately
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
@@ -43,6 +44,6 @@ self.addEventListener('activate', event => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim()) // Takes control of the page immediately
   );
 });
