@@ -1,5 +1,5 @@
-// UPDATED: Cache name incremented to v5-9
-const CACHE_NAME = 'game-center-v5-9'; 
+// UPDATED: Cache name incremented to v6-0
+const CACHE_NAME = 'game-center-v6-0'; 
 
 const urlsToCache = [
   './',

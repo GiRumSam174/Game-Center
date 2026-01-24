@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Game Center v5.9</title>
+    <title>Game Center v6.0</title>
     <meta name="theme-color" content="#222">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -145,18 +145,19 @@
         /* --- MODALS --- */
         .modal { position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; }
         
-        /* UPDATED: Added max-height and overflow for scrolling */
         .modal-content { 
             background: #333; padding: 25px; border: 1px solid #555; 
             width: 90%; max-width: 450px; border-radius: 10px; text-align: center;
+            /* Scroll fix */
             max-height: 90vh; overflow-y: auto; 
+            position: relative;
         }
         
-        .close-btn { position: sticky; top: 0; right: 0; float: right; font-size: 24px; cursor: pointer; color: #888; z-index: 10; background: #333; padding-left: 10px; }
+        .close-btn { position: sticky; top: 0; right: 0; float: right; font-size: 24px; cursor: pointer; color: #888; z-index: 1000; background: #333; padding-left: 10px; }
         .p2p-btn { background: var(--accent-p2p); color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; margin-top: 10px; cursor: pointer; font-weight: bold; }
         .token-box { width: 100%; background: #111; border: 1px solid #444; color: #0f0; padding: 5px; margin: 10px 0; height: 60px; resize: none; font-family: monospace; }
         
-        /* --- QR CODE & ANIMATION --- */
+        /* --- QR CODE & READER --- */
         #qrcode { 
             background: white; padding: 10px; width: 220px; height: 220px; margin: 0 auto; 
             cursor: zoom-in; transition: transform 0.2s; 
@@ -169,7 +170,7 @@
         .gen-anim { animation: pulseText 1.5s infinite; font-size: 1.1rem; color: #555; }
         @keyframes pulseText { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
 
-        /* SMART ZOOM */
+        /* QR FULLSCREEN */
         #qrcode.qr-fullscreen {
             position: fixed; top: 50%; left: 50%;
             width: 85vmin; height: 85vmin; 
@@ -180,7 +181,24 @@
             box-shadow: 0 0 50px rgba(0,0,0,0.9); cursor: zoom-out;
         }
         
-        #reader { width: 100%; height: 250px; background: black; margin-bottom: 10px; }
+        /* CAMERA CONTAINER FIX */
+        #reader { 
+            width: 100%; 
+            background: black; 
+            margin-bottom: 10px;
+            position: relative; 
+            overflow: hidden; /* Contains the video element */
+            border-radius: 5px;
+            min-height: 250px; /* Reserves space */
+        }
+        
+        /* Force video to respect container */
+        #reader video {
+            object-fit: cover;
+            width: 100% !important;
+            height: auto !important;
+        }
+
         .coffee-btn { display: inline-flex; align-items: center; justify-content: center; background: #FFDD00; color: #000; text-decoration: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; margin-top: 15px; font-size: 0.9rem; }
         .hidden { display: none !important; }
 
@@ -215,7 +233,7 @@
     <button class="menu-btn" onclick="launch('battleship')">Battleship</button>
     <button class="menu-btn" onclick="launch('gravitrips')">Gravitrips</button>
     <button class="menu-btn" onclick="launch('sos')">S O S</button>
-    <div style="margin-top:50px; color:#555; font-family:monospace;">v5.9</div>
+    <div style="margin-top:50px; color:#555; font-family:monospace;">v6.0</div>
 </div>
 
 <div id="game-ui" class="hidden" style="width:100%; max-width:1000px; display:flex; flex-direction:column; align-items:center;">
@@ -234,7 +252,7 @@
                 <span style="font-size:0.9rem; color:#aaa;">Next:</span>
                 <div id="ship-preview-grid"></div>
             </div>
-            <button id="bs-rotate-btn" class="mini-btn primary" onclick="bs_rotate()"> Rotate</button>
+            <button id="bs-rotate-btn" class="mini-btn primary" onclick="bs_rotate()">↻ Rotate</button>
             <button id="bs-reset-btn" class="mini-btn primary hidden" onclick="bs_init(gameMode)">Play Again</button>
         </div>
         <div id="bs-game-area">
@@ -284,11 +302,11 @@
         <span class="close-btn" onclick="closeModals()">&times;</span>
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #555; padding-bottom:10px; margin-bottom:15px;">
             <h2 style="margin:0; color:#88ccee;">P2P and Stats</h2>
-            <span style="font-family:monospace; color:#666;">v5.9</span>
+            <span style="font-family:monospace; color:#666;">v6.0</span>
         </div>
         <div id="stats-area" style="background:#111; padding:10px; margin-bottom:15px;">Stats: 0/0</div>
         <button class="p2p-btn" onclick="openP2P()">Start P2P Link</button>
-        <a href="https://www.buymeacoffee.com/classmarks" target="_blank" class="coffee-btn"> Buy me a coffee</a>
+        <a href="https://www.buymeacoffee.com/classmarks" target="_blank" class="coffee-btn">☕ Buy me a coffee</a>
     </div>
 </div>
 
@@ -305,8 +323,11 @@
         </div>
         <div style="text-align:left; border-top:1px solid #444; padding-top:15px;">
             <span style="color:#88ccee; font-weight:bold;">2. TARGET CODE</span>
+            
+            <button id="cam-toggle-btn" class="mini-btn" onclick="toggleScan()" style="width:100%; margin-bottom:10px; background:#444; font-size:1rem;">📷 Toggle Camera</button>
+            
             <div id="reader" class="hidden"></div>
-            <button id="cam-toggle-btn" class="mini-btn" onclick="toggleScan()" style="width:100%; margin-bottom:5px; background:#444; font-size:1rem;"> Toggle Camera</button>
+            
             <textarea id="remote-token" class="token-box" placeholder="Paste friend's code..."></textarea>
             <button class="p2p-btn" onclick="processRemote()">Connect</button>
         </div>
@@ -436,7 +457,7 @@
         if(mode !== 'cpu') bs_turn = isHost;
 
         bs_updateStatus(); bs_updatePreview(); 
-        document.getElementById('bs-rotate-btn').innerHTML = " Rotate";
+        document.getElementById('bs-rotate-btn').innerHTML = "↻ Rotate";
         bs_render(document.getElementById('bs-player-grid'), bs_pBoard, true); 
         bs_render(document.getElementById('bs-cpu-grid'), bs_cBoard, false);
     }
@@ -602,7 +623,7 @@
         let grid = document.getElementById('grav-grid'); grid.innerHTML='';
         for(let r=0;r<G_ROWS;r++) for(let c=0;c<G_COLS;c++) { let d=document.createElement('div'); d.className='grav-cell'; d.dataset.r=r; d.dataset.c=c; d.onclick=()=>grav_drop(c); grid.appendChild(d); }
         let arrows = document.getElementById('grav-arrows'); arrows.innerHTML='';
-        for(let c=0;c<G_COLS;c++) { let a=document.createElement('div'); a.className='grav-arrow'; a.textContent=''; a.onclick=()=>grav_drop(c); arrows.appendChild(a); }
+        for(let c=0;c<G_COLS;c++) { let a=document.createElement('div'); a.className='grav-arrow'; a.textContent='▼'; a.onclick=()=>grav_drop(c); arrows.appendChild(a); }
         grav_updStat();
     }
 
@@ -870,32 +891,30 @@
         } catch(e){alert("Invalid Code");}
     }
 
-    // UPDATED: Logic to properly stop the scanner and update button text
     function toggleScan() {
         let btn = document.getElementById('cam-toggle-btn');
         if(isScanning) { 
-            // Attempt to stop the scanner
             html5QrCode.stop().then(() => {
                 isScanning = false; 
                 document.getElementById('reader').classList.add('hidden'); 
-                btn.textContent = " Toggle Camera";
+                btn.textContent = "📷 Toggle Camera";
                 btn.classList.remove('active');
             }).catch(err => {
                 console.error("Failed to stop scanning", err);
                 isScanning = false;
                 document.getElementById('reader').classList.add('hidden');
-                btn.textContent = " Toggle Camera";
+                btn.textContent = "📷 Toggle Camera";
             });
         } else {
             document.getElementById('reader').classList.remove('hidden'); 
             html5QrCode = new Html5Qrcode("reader");
             html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 200 }, (txt) => { 
                 document.getElementById('remote-token').value = txt; 
-                toggleScan(); // Stop scanning once found
+                toggleScan(); 
                 processRemote(); 
             });
             isScanning = true;
-            btn.textContent = " Stop Camera";
+            btn.textContent = "⏹ Stop Camera";
             btn.classList.add('active');
         }
     }
