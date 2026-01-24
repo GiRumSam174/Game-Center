@@ -1,5 +1,5 @@
-// UPDATED: Cache name incremented to v6-3
-const CACHE_NAME = 'game-center-v6-3'; 
+// UPDATED: Cache name incremented to v6-4
+const CACHE_NAME = 'game-center-v6-4'; 
 
 const urlsToCache = [
   './',
@@ -7,7 +7,8 @@ const urlsToCache = [
   './manifest.json',
   // External libraries
   'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
-  'https://unpkg.com/html5-qrcode'
+  'https://unpkg.com/html5-qrcode',
+  'https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js'
 ];
 
 self.addEventListener('install', event => {

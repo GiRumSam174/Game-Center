@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Game Center v6.3</title>
+    <title>Game Center v6.4</title>
     <meta name="theme-color" content="#222">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+
     <style>
         /* --- VARIABLES --- */
         :root {
@@ -236,7 +238,7 @@
     <button class="menu-btn" onclick="launch('battleship')">Battleship</button>
     <button class="menu-btn" onclick="launch('gravitrips')">Gravitrips</button>
     <button class="menu-btn" onclick="launch('sos')">S O S</button>
-    <div style="margin-top:50px; color:#555; font-family:monospace;">v6.3</div>
+    <div style="margin-top:50px; color:#555; font-family:monospace;">v6.4</div>
 </div>
 
 <div id="game-ui" class="hidden" style="width:100%; max-width:1000px; display:flex; flex-direction:column; align-items:center;">
@@ -305,7 +307,7 @@
         <span class="close-btn" onclick="closeModals()">&times;</span>
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #555; padding-bottom:10px; margin-bottom:15px;">
             <h2 style="margin:0; color:#88ccee;">P2P and Stats</h2>
-            <span style="font-family:monospace; color:#666;">v6.3</span>
+            <span style="font-family:monospace; color:#666;">v6.4</span>
         </div>
         <div id="stats-area" style="background:#111; padding:10px; margin-bottom:15px;">Stats: 0/0</div>
         <button class="p2p-btn" onclick="openP2P()">Start P2P Game Link</button>
@@ -789,13 +791,16 @@
         
         peerConn.onicecandidate = e => { 
             if(!e.candidate) { 
-                let t = btoa(JSON.stringify(peerConn.localDescription)); 
-                document.getElementById('local-token').value=t; 
+                // COMPRESSION APPLIED HERE
+                let json = JSON.stringify(peerConn.localDescription);
+                let compressed = LZString.compressToEncodedURIComponent(json);
+                document.getElementById('local-token').value = compressed; 
+                
                 let qrContainer = document.getElementById('qrcode');
                 qrContainer.innerHTML = '<div id="qr-hint">Tap anywhere to minimize</div>';
                 try {
                     new QRCode(qrContainer, {
-                        text: t,
+                        text: compressed,
                         width: 512,
                         height: 512,
                         correctLevel: QRCode.CorrectLevel.L
@@ -869,17 +874,23 @@
     function processRemote() {
         let txt = document.getElementById('remote-token').value; if(!txt)return;
         try {
-            let desc = JSON.parse(atob(txt));
+            // DECOMPRESSION APPLIED HERE
+            let decompressed = LZString.decompressFromEncodedURIComponent(txt);
+            let desc = JSON.parse(decompressed);
+
             if(desc.type==='offer') {
                 if(peerConn) peerConn.close(); 
                 isHost=false;
                 peerConn = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
                 peerConn.onicecandidate = e => { 
                     if(!e.candidate) { 
-                        let t = btoa(JSON.stringify(peerConn.localDescription)); 
-                        document.getElementById('local-token').value=t; 
+                        // COMPRESSION FOR ANSWER
+                        let json = JSON.stringify(peerConn.localDescription);
+                        let compressed = LZString.compressToEncodedURIComponent(json);
+                        document.getElementById('local-token').value = compressed; 
+
                         document.getElementById('qrcode').innerHTML = '<div id="qr-hint">Tap anywhere to minimize</div>';
-                        new QRCode(document.getElementById('qrcode'),{text:t,width:512,height:512}); 
+                        new QRCode(document.getElementById('qrcode'),{text:compressed,width:512,height:512}); 
                     }
                 };
                 peerConn.ondatachannel = e => { dataChan = e.channel; setupChan(); };
@@ -888,7 +899,10 @@
             } else {
                 peerConn.setRemoteDescription(desc);
             }
-        } catch(e){alert("Invalid Code");}
+        } catch(e) { 
+            console.error(e); 
+            alert("Invalid Code"); 
+        }
     }
 
     function toggleScan() {
