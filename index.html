@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Game Center v7.2</title>
+    <title>Game Center v7.3</title>
     <meta name="theme-color" content="#222">
     <link rel="manifest" href="manifest.json">
     
@@ -214,7 +214,7 @@
     <button class="menu-btn" onclick="launch('battleship')">Battleship</button>
     <button class="menu-btn" onclick="launch('gravitrips')">Gravitrips</button>
     <button class="menu-btn" onclick="launch('sos')">S O S</button>
-    <div style="margin-top:50px; color:#555; font-family:monospace;">v7.2 (Fix)</div>
+    <div style="margin-top:50px; color:#555; font-family:monospace;">v7.3 (Fix)</div>
 </div>
 
 <div id="game-ui" class="hidden" style="width:100%; max-width:1000px; display:flex; flex-direction:column; align-items:center;">
@@ -283,7 +283,7 @@
         <span class="close-btn" onclick="closeModals()">&times;</span>
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #555; padding-bottom:10px; margin-bottom:15px;">
             <h2 style="margin:0; color:#88ccee;">Stats</h2>
-            <span style="font-family:monospace; color:#666;">v7.2</span>
+            <span style="font-family:monospace; color:#666;">v7.3</span>
         </div>
         <div id="stats-area" style="background:#111; padding:10px; margin-bottom:15px;">Stats: 0/0</div>
         <button class="p2p-btn" onclick="openP2P()">Start Multiplayer Game</button>
@@ -788,15 +788,25 @@
 
     function sos_end() {
         gameInProgress = false;
-        let won = sos_scores[1] > sos_scores[2]; let draw = sos_scores[1] === sos_scores[2];
-        if(draw) { document.getElementById('status-bar').textContent = "DRAW GAME!"; document.getElementById('status-bar').style.background = "#555"; }
+        // Fix for P2P win display logic
+        let myScore = sos_scores[sos_myId];
+        let oppScore = sos_scores[sos_myId === 1 ? 2 : 1];
+        
+        let won = myScore > oppScore;
+        let draw = myScore === oppScore;
+
+        if(draw) { 
+            document.getElementById('status-bar').textContent = "DRAW GAME!"; 
+            document.getElementById('status-bar').style.background = "#555"; 
+        }
         else {
-            document.getElementById('status-bar').textContent = won ? "VICTORY!" : "DEFEAT!"; document.getElementById('status-bar').style.background = won ? "green" : "#b30000";
+            document.getElementById('status-bar').textContent = won ? "VICTORY!" : "DEFEAT!"; 
+            document.getElementById('status-bar').style.background = won ? "green" : "#b30000";
             if(gameMode==='cpu') { stats.sos.p++; if(won) stats.sos.w++; localStorage.setItem('sos_played',stats.sos.p); localStorage.setItem('sos_won',stats.sos.w); }
         }
     }
 
-    // --- NETWORKING (DUAL MODE: PEERJS + MANUAL) ---
+    // --- NETWORKING: CLOUD & MANUAL ---
     
     function openP2P() {
         closeModals();
@@ -812,7 +822,7 @@
         document.getElementById('content-'+t).classList.remove('hidden');
     }
 
-    // --- CLOUD MODE (Updated with STUN Fix & Race Condition Check) ---
+    // --- CLOUD MODE (FIXED FOR RACE CONDITIONS) ---
     function cloudHost() {
         const code = Math.floor(1000 + Math.random() * 9000);
         const fullId = 'gc7-' + code;
@@ -820,7 +830,6 @@
         document.getElementById('cloud-host-btn').classList.add('hidden');
         document.getElementById('host-code-display').classList.remove('hidden');
         document.getElementById('my-room-code').textContent = code;
-        
         isHost = true;
         
         // FIX: STUN servers added
@@ -840,8 +849,8 @@
         
         peer.on('connection', (c) => {
             conn = c;
-            document.getElementById('host-status').textContent = "Player found! Opening secure channel...";
-            // FIX: Check if connection is already open to avoid race condition
+            document.getElementById('host-status').textContent = "Player found! Opening channel...";
+            // FIX: Check if already open to avoid race condition
             if(conn.open) { finalSetup(); } 
             else { conn.on('open', finalSetup); }
         });
@@ -873,12 +882,16 @@
 
         peer.on('open', () => {
             document.getElementById('join-status').textContent = "Handshaking...";
-            // FIX: Force JSON serialization and reliable transfer
+            // FIX: Force JSON serialization
             conn = peer.connect('gc7-' + code, { reliable: true, serialization: 'json' });
             
             // FIX: Check if connection is already open
             if(conn.open) { finalSetup(); } 
             else { conn.on('open', finalSetup); }
+            
+            setTimeout(() => {
+                if(!isP2P) document.getElementById('join-status').textContent = "Stuck? Try Manual/QR mode.";
+            }, 8000);
         });
         
         peer.on('error', (err) => {
@@ -886,18 +899,10 @@
         });
     }
 
-    function setupConnection() {
-        // Redundant catch-all for connection opening
-        conn.on('open', finalSetup);
-        conn.on('data', (data) => handleData(data));
-        conn.on('close', () => alert("Opponent disconnected"));
-    }
-
     function finalSetup() {
         closeModals();
         isP2P = true;
         
-        // Ensure data listeners are attached
         conn.on('data', (data) => handleData(data));
         conn.on('close', () => alert("Opponent disconnected"));
 
