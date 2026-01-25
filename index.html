@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Game Center v6.9</title>
+    <title>Game Center v6.91</title>
     <meta name="theme-color" content="#222">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -164,6 +164,7 @@
         .token-box { width: 100%; background: #111; border: 1px solid #444; color: #0f0; padding: 5px; margin: 10px 0; height: 60px; resize: none; font-family: monospace; }
         
         /* --- QR CODE & READER --- */
+        /* DEFAULT STATE (Minified) */
         #qrcode, #qrcode-answer { 
             background: white; 
             padding: 10px; 
@@ -172,7 +173,7 @@
             cursor: zoom-in; 
             display: flex; justify-content: center; align-items: center;
             border-radius: 4px; overflow: hidden;
-            position: relative; /* Needed for text positioning */
+            position: relative; 
         }
         
         #qrcode img, #qrcode canvas, 
@@ -183,32 +184,56 @@
             max-width: 100%;
         }
 
+        /* FULLSCREEN STATE (Maximized) */
         #qrcode.qr-fullscreen, #qrcode-answer.qr-fullscreen {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            max-width: none; max-height: none; z-index: 5000;
-            background: rgba(0,0,0,0.95); border-radius: 0;
+            position: fixed; 
+            top: 0; left: 0; right: 0; bottom: 0;
+            width: 100vw; height: 100vh;
+            max-width: none; max-height: none;
+            background: rgba(0,0,0,0.95);
+            z-index: 5000;
+            border-radius: 0;
+            margin: 0; padding: 0;
             cursor: zoom-out;
+            
+            /* Center Logic */
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center;
         }
         
-        #qrcode.qr-fullscreen img, #qrcode-answer.qr-fullscreen img {
-            background: white; padding: 15px; border-radius: 5px;
-            max-width: 90vmin; max-height: 80vmin; width: auto; height: auto;
+        #qrcode.qr-fullscreen img, #qrcode.qr-fullscreen canvas,
+        #qrcode-answer.qr-fullscreen img, #qrcode-answer.qr-fullscreen canvas {
+            background: white; 
+            padding: 10px; 
+            border-radius: 5px;
+            
+            /* CONSTRAINTS: Never exceed 90% width or 80% height */
+            max-width: 90vw !important; 
+            max-height: 80vh !important; 
+            
+            /* Allow auto scaling within those bounds */
+            width: auto !important; 
+            height: auto !important;
+            
             border: 5px solid white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            margin: 0 !important; /* Fix off-center bug */
         }
 
+        /* TEXT HINTS */
         #qr-hint { display: none; color: white; font-size: 1.2rem; animation: pulse 1.5s infinite; }
         
-        /* UPDATED: Position hint text absolutely at the bottom when fullscreen */
         #qrcode.qr-fullscreen #qr-hint, #qrcode-answer.qr-fullscreen #qr-hint { 
             display: block; 
             position: absolute;
-            bottom: 50px; left: 0; width: 100%;
+            bottom: 40px; left: 0; width: 100%;
             text-align: center;
-            pointer-events: none; /* Let clicks pass through */
+            pointer-events: none;
         }
         
         @keyframes pulse { 0% { opacity:0.6; } 50% { opacity:1; } 100% { opacity:0.6; } }
-
         .gen-anim { animation: pulseText 1.5s infinite; font-size: 1.1rem; color: #555; }
         @keyframes pulseText { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
 
@@ -254,7 +279,7 @@
     <button class="menu-btn" onclick="launch('battleship')">Battleship</button>
     <button class="menu-btn" onclick="launch('gravitrips')">Gravitrips</button>
     <button class="menu-btn" onclick="launch('sos')">S O S</button>
-    <div style="margin-top:50px; color:#555; font-family:monospace;">v6.9</div>
+    <div style="margin-top:50px; color:#555; font-family:monospace;">v6.91</div>
 </div>
 
 <div id="game-ui" class="hidden" style="width:100%; max-width:1000px; display:flex; flex-direction:column; align-items:center;">
@@ -323,7 +348,7 @@
         <span class="close-btn" onclick="closeModals()">&times;</span>
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #555; padding-bottom:10px; margin-bottom:15px;">
             <h2 style="margin:0; color:#88ccee;">P2P and Stats</h2>
-            <span style="font-family:monospace; color:#666;">v6.9</span>
+            <span style="font-family:monospace; color:#666;">v6.91</span>
         </div>
         <div id="stats-area" style="background:#111; padding:10px; margin-bottom:15px;">Stats: 0/0</div>
         <button class="p2p-btn" onclick="openP2P()">Start P2P Game Link</button>

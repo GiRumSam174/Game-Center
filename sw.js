@@ -1,4 +1,4 @@
-const CACHE_NAME = 'game-center-v6.9';
+const CACHE_NAME = 'game-center-v6.91';
 
 // We cache the HTML, the Manifest, and the external libraries
 const ASSETS = [
