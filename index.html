@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Game Center v7.3</title>
+    <title>Game Center v7.5</title>
     <meta name="theme-color" content="#222">
     <link rel="manifest" href="manifest.json">
     
@@ -52,7 +52,7 @@
             font-size: 1rem; font-weight: bold; transition: background-color 0.3s;
         }
 
-        #control-bar { display: flex; gap: 10px; margin-bottom: 5px; justify-content: center; width: 100%; z-index: 100; }
+        #control-bar { display: flex; gap: 10px; margin-bottom: 5px; justify-content: center; width: 100%; z-index: 100; flex-wrap: wrap; }
         .mini-btn {
             background-color: #444; color: #ccc; border: 1px solid #555;
             padding: 6px 12px; border-radius: 4px; cursor: pointer;
@@ -214,7 +214,7 @@
     <button class="menu-btn" onclick="launch('battleship')">Battleship</button>
     <button class="menu-btn" onclick="launch('gravitrips')">Gravitrips</button>
     <button class="menu-btn" onclick="launch('sos')">S O S</button>
-    <div style="margin-top:50px; color:#555; font-family:monospace;">v7.3 (Fix)</div>
+    <div style="margin-top:50px; color:#555; font-family:monospace;">v7.5</div>
 </div>
 
 <div id="game-ui" class="hidden" style="width:100%; max-width:1000px; display:flex; flex-direction:column; align-items:center;">
@@ -224,7 +224,7 @@
     <div id="control-bar">
         <button id="opt-btn" class="mini-btn" onclick="openOptions()">OPTIONS</button>
         <button id="exit-btn" class="mini-btn" onclick="attemptExit()">EXIT</button>
-        <button id="reset-game-btn" class="mini-btn primary hidden" onclick="resetCurrentGame()">NEW GAME</button>
+        <button id="reset-game-btn" class="mini-btn primary hidden" onclick="resetCurrentGame()">Play Again</button>
     </div>
 
     <div id="bs-wrapper" class="hidden">
@@ -283,7 +283,7 @@
         <span class="close-btn" onclick="closeModals()">&times;</span>
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #555; padding-bottom:10px; margin-bottom:15px;">
             <h2 style="margin:0; color:#88ccee;">Stats</h2>
-            <span style="font-family:monospace; color:#666;">v7.3</span>
+            <span style="font-family:monospace; color:#666;">v7.5</span>
         </div>
         <div id="stats-area" style="background:#111; padding:10px; margin-bottom:15px;">Stats: 0/0</div>
         <button class="p2p-btn" onclick="openP2P()">Start Multiplayer Game</button>
@@ -379,12 +379,13 @@
         document.getElementById('game-ui').classList.remove('hidden');
         document.getElementById('game-ui').style.display = 'flex';
         
+        // Reset UI
         document.getElementById('notify-left').textContent = ""; document.getElementById('notify-left').className = "notify-box";
         document.getElementById('notify-right').textContent = ""; document.getElementById('notify-right').className = "notify-box";
         document.getElementById('bs-wrapper').classList.add('hidden');
         document.getElementById('grav-wrapper').classList.add('hidden');
         document.getElementById('sos-wrapper').classList.add('hidden');
-        document.getElementById('reset-game-btn').classList.add('hidden');
+        document.getElementById('reset-game-btn').classList.add('hidden'); // HIDE ON LAUNCH
 
         if (game === 'battleship') {
             document.getElementById('game-title').textContent = "BATTLESHIP";
@@ -393,12 +394,10 @@
         } else if (game === 'gravitrips') {
             document.getElementById('game-title').textContent = "GRAVITRIPS";
             document.getElementById('grav-wrapper').classList.remove('hidden');
-            document.getElementById('reset-game-btn').classList.remove('hidden');
             grav_init('cpu');
         } else if (game === 'sos') {
             document.getElementById('game-title').textContent = "SOS";
             document.getElementById('sos-wrapper').classList.remove('hidden');
-            document.getElementById('reset-game-btn').classList.remove('hidden');
             sos_init('cpu');
         }
     }
@@ -646,6 +645,9 @@
         grav_board = Array(G_ROWS).fill(null).map(()=>Array(G_COLS).fill(0));
         grav_locked = false; grav_myId = (mode==='p2p'&&!isHost) ? 2 : 1; grav_turn = 1; gameInProgress = false;
         
+        // HIDE PLAY AGAIN BUTTON
+        document.getElementById('reset-game-btn').classList.add('hidden');
+
         let grid = document.getElementById('grav-grid'); grid.innerHTML='';
         for(let r=0;r<G_ROWS;r++) for(let c=0;c<G_COLS;c++) { let d=document.createElement('div'); d.className='grav-cell'; d.dataset.r=r; d.dataset.c=c; d.onclick=()=>grav_drop(c); grid.appendChild(d); }
         let arrows = document.getElementById('grav-arrows'); arrows.innerHTML='';
@@ -692,6 +694,8 @@
 
     function grav_end(won) { 
         grav_locked=true; gameInProgress = false; 
+        // SHOW PLAY AGAIN BUTTON
+        document.getElementById('reset-game-btn').classList.remove('hidden');
         document.getElementById('status-bar').textContent = won?"VICTORY!":"DEFEAT!"; 
         document.getElementById('status-bar').style.background = won?"green":"#b30000"; 
         if(gameMode==='cpu') { stats.gravitrips.p++; if(won) stats.gravitrips.w++; localStorage.setItem('grav_played',stats.gravitrips.p); localStorage.setItem('grav_won',stats.gravitrips.w); } 
@@ -712,6 +716,9 @@
         sos_locked = false; sos_myId = (mode==='p2p'&&!isHost) ? 2 : 1; sos_turn = 1; 
         sos_scores={1:0, 2:0}; sos_sel='S'; gameInProgress = false;
         
+        // HIDE PLAY AGAIN BUTTON
+        document.getElementById('reset-game-btn').classList.add('hidden');
+
         document.getElementById('sos-s1').textContent = "0"; 
         document.getElementById('sos-s2').textContent = "0"; 
         sos_setLetter('S'); sos_updStat();
@@ -788,7 +795,10 @@
 
     function sos_end() {
         gameInProgress = false;
-        // Fix for P2P win display logic
+        
+        // SHOW PLAY AGAIN BUTTON
+        document.getElementById('reset-game-btn').classList.remove('hidden');
+
         let myScore = sos_scores[sos_myId];
         let oppScore = sos_scores[sos_myId === 1 ? 2 : 1];
         
@@ -806,7 +816,7 @@
         }
     }
 
-    // --- NETWORKING: CLOUD & MANUAL ---
+    // --- NETWORKING (DUAL MODE: PEERJS + MANUAL) ---
     
     function openP2P() {
         closeModals();
@@ -838,7 +848,8 @@
             config: {
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' }
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' }
                 ]
             }
         });
@@ -875,7 +886,8 @@
             config: {
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' }
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' }
                 ]
             }
         });
