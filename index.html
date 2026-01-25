@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Game Center v7.0</title>
+    <title>Game Center v7.1</title>
     <meta name="theme-color" content="#222">
     <link rel="manifest" href="manifest.json">
     
@@ -214,7 +214,7 @@
     <button class="menu-btn" onclick="launch('battleship')">Battleship</button>
     <button class="menu-btn" onclick="launch('gravitrips')">Gravitrips</button>
     <button class="menu-btn" onclick="launch('sos')">S O S</button>
-    <div style="margin-top:50px; color:#555; font-family:monospace;">v7.0 (Cloud Link)</div>
+    <div style="margin-top:50px; color:#555; font-family:monospace;">v7.1 (PWA)</div>
 </div>
 
 <div id="game-ui" class="hidden" style="width:100%; max-width:1000px; display:flex; flex-direction:column; align-items:center;">
@@ -283,7 +283,7 @@
         <span class="close-btn" onclick="closeModals()">&times;</span>
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #555; padding-bottom:10px; margin-bottom:15px;">
             <h2 style="margin:0; color:#88ccee;">Stats</h2>
-            <span style="font-family:monospace; color:#666;">v7.0</span>
+            <span style="font-family:monospace; color:#666;">v7.1</span>
         </div>
         <div id="stats-area" style="background:#111; padding:10px; margin-bottom:15px;">Stats: 0/0</div>
         <button class="p2p-btn" onclick="openP2P()">Start Multiplayer Game</button>
@@ -301,7 +301,7 @@
         </div>
 
         <div id="content-cloud">
-            <p style="color:#ccc; font-size:0.9rem;">Requires Internet. Use Manual tab for offline.</p>
+            <p style="color:#ccc; font-size:0.9rem;">Requires Internet.</p>
             
             <div style="background:#222; padding:15px; border-radius:8px; margin-bottom:15px;">
                 <h3 style="margin:0 0 10px 0; color:var(--accent-p2p);">HOST GAME</h3>
@@ -564,6 +564,15 @@
         });
     }
 
+    function bs_checkP2P() {
+        if(bs_p2pReady && bs_state==='placement' && bs_shipIdx >= bs_pShips.length) {
+            bs_state='combat'; gameInProgress=true;
+            document.getElementById('status-bar').textContent = isHost ? "Your Turn" : "Enemy Turn";
+            document.getElementById('enemy-board-title').textContent = "Enemy Waters (P2P)";
+            bs_render(document.getElementById('bs-cpu-grid'), bs_cBoard, false);
+        }
+    }
+
     function bs_notifyGood(msg) { let el=document.getElementById('notify-right'); el.textContent = msg; el.classList.add('glow-green'); }
     function bs_notifyBad(msg) { let el=document.getElementById('notify-left'); el.textContent = msg; el.classList.add('glow-red'); }
 
@@ -803,9 +812,9 @@
         document.getElementById('content-'+t).classList.remove('hidden');
     }
 
-    // --- CLOUD MODE (Easy) ---
+    // --- CLOUD MODE (Updated with STUN Fix) ---
     function cloudHost() {
-        const code = Math.floor(1000 + Math.random() * 9000); // 4 digit code
+        const code = Math.floor(1000 + Math.random() * 9000);
         const fullId = 'gc7-' + code;
         
         document.getElementById('cloud-host-btn').classList.add('hidden');
@@ -813,7 +822,18 @@
         document.getElementById('my-room-code').textContent = code;
         
         isHost = true;
-        peer = new Peer(fullId);
+        
+        // STUN/TURN CONFIG FIX
+        peer = new Peer(fullId, {
+            debug: 2,
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' }
+                ]
+            }
+        });
         
         peer.on('open', (id) => {
             console.log("Hosted: " + id);
@@ -821,13 +841,13 @@
         
         peer.on('connection', (c) => {
             conn = c;
-            document.getElementById('host-status').textContent = "Player found! Connecting...";
+            document.getElementById('host-status').textContent = "Player found! Opening secure channel...";
             setupConnection();
         });
         
         peer.on('error', (err) => {
             console.error(err);
-            if(err.type === 'unavailable-id') cloudHost(); // Retry if code collision
+            if(err.type === 'unavailable-id') cloudHost();
             else document.getElementById('host-status').textContent = "Error: " + err.type;
         });
     }
@@ -837,15 +857,28 @@
         if(code.length !== 4) return alert("Enter 4 digit code");
         
         isHost = false;
-        document.getElementById('join-status').textContent = "Connecting to room...";
+        document.getElementById('join-status').textContent = "Dialing host...";
         
-        peer = new Peer(); // Auto ID for joiner
+        // STUN/TURN CONFIG FIX
+        peer = new Peer(null, {
+            debug: 2,
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' }
+                ]
+            }
+        });
+
         peer.on('open', () => {
-            conn = peer.connect('gc7-' + code);
+            document.getElementById('join-status').textContent = "Handshaking...";
+            conn = peer.connect('gc7-' + code, { reliable: true });
             setupConnection();
         });
+        
         peer.on('error', (err) => {
-            document.getElementById('join-status').textContent = "Failed. Check code.";
+            document.getElementById('join-status').textContent = "Connection Failed. Try again.";
         });
     }
 
