@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Game Center v7.6</title>
+    <title>Game Center v7.7</title>
     <meta name="theme-color" content="#222">
     <link rel="manifest" href="manifest.json">
     
@@ -145,7 +145,7 @@
         .sos-cell.s-p2, .sos-cell.o-p2 { color: var(--sos-p2); text-shadow: 0 0 5px rgba(255,255,50,0.5); }
         @media (max-width: 400px) { .sos-cell { width: 32px; height: 32px; font-size: 1.2rem; } }
 
-        /* --- MODALS (NEW STYLE) --- */
+        /* --- MODALS --- */
         .modal { position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; }
         
         .modal-content { 
@@ -174,7 +174,7 @@
         }
         .connect-status { color: #aaa; font-style: italic; margin-top: 10px; min-height: 20px; }
 
-        /* MANUAL QR STYLES (Backup) */
+        /* MANUAL QR STYLES */
         #qrcode, #qrcode-answer { background: white; padding: 10px; width: 200px; height: 200px; margin: 10px auto; border-radius: 4px; }
         #qrcode img, #qrcode canvas { width: 100%; height: 100%; display: block; }
         .token-box { width: 100%; background: #111; border: 1px solid #444; color: #0f0; padding: 5px; margin: 10px 0; height: 40px; resize: none; font-family: monospace; font-size: 0.8rem; }
@@ -232,7 +232,7 @@
     <button class="menu-btn" onclick="launch('battleship')">Battleship</button>
     <button class="menu-btn" onclick="launch('gravitrips')">Gravitrips</button>
     <button class="menu-btn" onclick="launch('sos')">S O S</button>
-    <div style="margin-top:50px; color:#555; font-family:monospace;">v7.6</div>
+    <div style="margin-top:50px; color:#555; font-family:monospace;">v7.7</div>
 </div>
 
 <div id="game-ui" class="hidden" style="width:100%; max-width:1000px; display:flex; flex-direction:column; align-items:center;">
@@ -301,7 +301,7 @@
         <span class="close-btn" onclick="closeModals()">&times;</span>
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #555; padding-bottom:10px; margin-bottom:15px;">
             <h2 style="margin:0; color:#88ccee;">Stats</h2>
-            <span style="font-family:monospace; color:#666;">v7.6</span>
+            <span style="font-family:monospace; color:#666;">v7.7</span>
         </div>
         <div id="stats-area" style="background:#111; padding:10px; margin-bottom:15px;">Stats: 0/0</div>
         <button class="p2p-btn" onclick="openP2P()">Start Multiplayer Game</button>
@@ -426,8 +426,14 @@
     }
 
     function resetCurrentGame() {
-        if (activeGame === 'gravitrips') grav_init(gameMode);
-        if (activeGame === 'sos') sos_init(gameMode);
+        if (activeGame === 'gravitrips') {
+            if(isP2P) p2pSend({type:'RESET'});
+            grav_init(gameMode);
+        }
+        if (activeGame === 'sos') {
+            if(isP2P) p2pSend({type:'RESET'});
+            sos_init(gameMode);
+        }
     }
 
     function openOptions() {
@@ -720,8 +726,17 @@
     }
 
     function grav_updStat() { 
-        if(grav_turn===grav_myId) { document.getElementById('status-bar').textContent="YOUR TURN"; document.getElementById('status-bar').style.background="#333"; } 
-        else { document.getElementById('status-bar').textContent = gameMode==='cpu' ? "CPU TURN" : "ENEMY TURN"; } 
+        if(grav_turn===grav_myId) { 
+            document.getElementById('status-bar').textContent="YOUR TURN"; 
+            document.getElementById('status-bar').style.background="#333"; 
+        } 
+        else { 
+            document.getElementById('status-bar').textContent = gameMode==='cpu' ? "CPU TURN" : "ENEMY TURN"; 
+        } 
+        // Notify new game on init?
+        if(!gameInProgress && gameMode==='p2p') {
+             // Just init text
+        }
     }
 
     // --- SOS ---
@@ -953,6 +968,18 @@
 
     function handleData(data) {
         let msg = (typeof data === 'string') ? JSON.parse(data) : data;
+
+        if (msg.type === 'RESET') {
+            if (activeGame === 'gravitrips') {
+                grav_init('p2p');
+                document.getElementById('status-bar').textContent = "NEW GAME STARTED";
+            }
+            if (activeGame === 'sos') {
+                sos_init('p2p');
+                document.getElementById('status-bar').textContent = "NEW GAME STARTED";
+            }
+            return;
+        }
 
         if(activeGame==='battleship') {
             if(msg.type==='READY') { bs_p2pReady=true; bs_checkP2P(); }
