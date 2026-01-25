@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Game Center v6.8</title>
+    <title>Game Center v6.9</title>
     <meta name="theme-color" content="#222">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -163,7 +163,7 @@
 
         .token-box { width: 100%; background: #111; border: 1px solid #444; color: #0f0; padding: 5px; margin: 10px 0; height: 60px; resize: none; font-family: monospace; }
         
-        /* --- QR CODE & READER (FIXED SIZING) --- */
+        /* --- QR CODE & READER --- */
         #qrcode, #qrcode-answer { 
             background: white; 
             padding: 10px; 
@@ -172,9 +172,9 @@
             cursor: zoom-in; 
             display: flex; justify-content: center; align-items: center;
             border-radius: 4px; overflow: hidden;
+            position: relative; /* Needed for text positioning */
         }
         
-        /* FORCE IMAGES TO FIT */
         #qrcode img, #qrcode canvas, 
         #qrcode-answer img, #qrcode-answer canvas { 
             display: block; 
@@ -196,8 +196,17 @@
             border: 5px solid white;
         }
 
-        #qr-hint { display: none; color: white; margin-top: 20px; font-size: 1.2rem; animation: pulse 1.5s infinite; }
-        #qrcode.qr-fullscreen #qr-hint, #qrcode-answer.qr-fullscreen #qr-hint { display: block; }
+        #qr-hint { display: none; color: white; font-size: 1.2rem; animation: pulse 1.5s infinite; }
+        
+        /* UPDATED: Position hint text absolutely at the bottom when fullscreen */
+        #qrcode.qr-fullscreen #qr-hint, #qrcode-answer.qr-fullscreen #qr-hint { 
+            display: block; 
+            position: absolute;
+            bottom: 50px; left: 0; width: 100%;
+            text-align: center;
+            pointer-events: none; /* Let clicks pass through */
+        }
+        
         @keyframes pulse { 0% { opacity:0.6; } 50% { opacity:1; } 100% { opacity:0.6; } }
 
         .gen-anim { animation: pulseText 1.5s infinite; font-size: 1.1rem; color: #555; }
@@ -245,7 +254,7 @@
     <button class="menu-btn" onclick="launch('battleship')">Battleship</button>
     <button class="menu-btn" onclick="launch('gravitrips')">Gravitrips</button>
     <button class="menu-btn" onclick="launch('sos')">S O S</button>
-    <div style="margin-top:50px; color:#555; font-family:monospace;">v6.8</div>
+    <div style="margin-top:50px; color:#555; font-family:monospace;">v6.9</div>
 </div>
 
 <div id="game-ui" class="hidden" style="width:100%; max-width:1000px; display:flex; flex-direction:column; align-items:center;">
@@ -314,7 +323,7 @@
         <span class="close-btn" onclick="closeModals()">&times;</span>
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #555; padding-bottom:10px; margin-bottom:15px;">
             <h2 style="margin:0; color:#88ccee;">P2P and Stats</h2>
-            <span style="font-family:monospace; color:#666;">v6.8</span>
+            <span style="font-family:monospace; color:#666;">v6.9</span>
         </div>
         <div id="stats-area" style="background:#111; padding:10px; margin-bottom:15px;">Stats: 0/0</div>
         <button class="p2p-btn" onclick="openP2P()">Start P2P Game Link</button>
