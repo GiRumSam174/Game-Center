@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Game Center v7.7</title>
+    <title>Game Center v7.8</title>
     <meta name="theme-color" content="#222">
     <link rel="manifest" href="manifest.json">
     
@@ -145,7 +145,7 @@
         .sos-cell.s-p2, .sos-cell.o-p2 { color: var(--sos-p2); text-shadow: 0 0 5px rgba(255,255,50,0.5); }
         @media (max-width: 400px) { .sos-cell { width: 32px; height: 32px; font-size: 1.2rem; } }
 
-        /* --- MODALS --- */
+        /* --- MODALS (NEW STYLE) --- */
         .modal { position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; }
         
         .modal-content { 
@@ -232,7 +232,7 @@
     <button class="menu-btn" onclick="launch('battleship')">Battleship</button>
     <button class="menu-btn" onclick="launch('gravitrips')">Gravitrips</button>
     <button class="menu-btn" onclick="launch('sos')">S O S</button>
-    <div style="margin-top:50px; color:#555; font-family:monospace;">v7.7</div>
+    <div style="margin-top:50px; color:#555; font-family:monospace;">v7.8</div>
 </div>
 
 <div id="game-ui" class="hidden" style="width:100%; max-width:1000px; display:flex; flex-direction:column; align-items:center;">
@@ -301,7 +301,7 @@
         <span class="close-btn" onclick="closeModals()">&times;</span>
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #555; padding-bottom:10px; margin-bottom:15px;">
             <h2 style="margin:0; color:#88ccee;">Stats</h2>
-            <span style="font-family:monospace; color:#666;">v7.7</span>
+            <span style="font-family:monospace; color:#666;">v7.8</span>
         </div>
         <div id="stats-area" style="background:#111; padding:10px; margin-bottom:15px;">Stats: 0/0</div>
         <button class="p2p-btn" onclick="openP2P()">Start Multiplayer Game</button>
@@ -380,6 +380,10 @@
     let html5QrCode = null, isScanning = false;
     let gameInProgress = false;
     let audioCtx = null;
+    
+    // TURN TRACKING
+    let currentStarter = 1; // Who started current game?
+    let nextStarter = 1; // Who will start next game?
 
     // View References & Stats
     const stats = {
@@ -427,12 +431,12 @@
 
     function resetCurrentGame() {
         if (activeGame === 'gravitrips') {
-            if(isP2P) p2pSend({type:'RESET'});
-            grav_init(gameMode);
+            if(isP2P) p2pSend({type:'RESET', nextTurn: nextStarter});
+            grav_init(gameMode, nextStarter);
         }
         if (activeGame === 'sos') {
-            if(isP2P) p2pSend({type:'RESET'});
-            sos_init(gameMode);
+            if(isP2P) p2pSend({type:'RESET', nextTurn: nextStarter});
+            sos_init(gameMode, nextStarter);
         }
     }
 
@@ -664,10 +668,13 @@
     const G_ROWS = 6, G_COLS = 7;
     let grav_board=[], grav_turn=1, grav_myId=1, grav_locked=false;
     
-    function grav_init(mode) {
+    function grav_init(mode, startPlayer = 1) {
         gameMode = mode; 
         grav_board = Array(G_ROWS).fill(null).map(()=>Array(G_COLS).fill(0));
-        grav_locked = false; grav_myId = (mode==='p2p'&&!isHost) ? 2 : 1; grav_turn = 1; gameInProgress = false;
+        grav_locked = false; grav_myId = (mode==='p2p'&&!isHost) ? 2 : 1; 
+        grav_turn = startPlayer; 
+        currentStarter = startPlayer; // Track for tie logic
+        gameInProgress = false;
         
         // HIDE PLAY AGAIN BUTTON
         document.getElementById('reset-game-btn').classList.add('hidden');
@@ -690,7 +697,7 @@
         cell.classList.add(p===1?'p1':'p2');
         setTimeout(()=>{ 
             if(grav_checkWin(p)) grav_end(p===grav_myId); 
-            else if(grav_board.every(row=>row.every(k=>k!==0))) { document.getElementById('status-bar').textContent="DRAW"; } 
+            else if(grav_board.every(row=>row.every(k=>k!==0))) { grav_end(false, true); } // Draw
             else { grav_turn = p===1?2:1; grav_locked=false; grav_updStat(); if(gameMode==='cpu' && grav_turn===2) { grav_locked=true; setTimeout(grav_cpu, 500); }}
         },400);
     }
@@ -716,16 +723,39 @@
         return false; 
     }
 
-    function grav_end(won) { 
+    function grav_end(won, isDraw=false) { 
         grav_locked=true; gameInProgress = false; 
-        // SHOW PLAY AGAIN BUTTON
         document.getElementById('reset-game-btn').classList.remove('hidden');
-        document.getElementById('status-bar').textContent = won?"VICTORY!":"DEFEAT!"; 
-        document.getElementById('status-bar').style.background = won?"green":"#b30000"; 
-        if(gameMode==='cpu') { stats.gravitrips.p++; if(won) stats.gravitrips.w++; localStorage.setItem('grav_played',stats.gravitrips.p); localStorage.setItem('grav_won',stats.gravitrips.w); } 
+        
+        let opponentId = grav_myId === 1 ? 2 : 1;
+
+        if (isDraw) {
+            document.getElementById('status-bar').textContent = "DRAW GAME!"; 
+            document.getElementById('status-bar').style.background = "#555";
+            nextStarter = currentStarter; // Tie = starter goes again
+        } else {
+            document.getElementById('status-bar').textContent = won?"VICTORY!":"DEFEAT!"; 
+            document.getElementById('status-bar').style.background = won?"green":"#b30000"; 
+            if(gameMode==='cpu') { stats.gravitrips.p++; if(won) stats.gravitrips.w++; localStorage.setItem('grav_played',stats.gravitrips.p); localStorage.setItem('grav_won',stats.gravitrips.w); } 
+            
+            // Winner starts next
+            nextStarter = won ? grav_myId : opponentId;
+        }
     }
 
     function grav_updStat() { 
+        // Initial Banner Logic for new games
+        if(!gameInProgress && gameMode === 'p2p') {
+            if(grav_turn === grav_myId) {
+                document.getElementById('status-bar').textContent="New Game Started: YOUR TURN"; 
+                document.getElementById('status-bar').style.background="#005500"; 
+            } else {
+                document.getElementById('status-bar').textContent="New Game Started: OPPONENT TURN"; 
+                document.getElementById('status-bar').style.background="#550000"; 
+            }
+            return;
+        }
+
         if(grav_turn===grav_myId) { 
             document.getElementById('status-bar').textContent="YOUR TURN"; 
             document.getElementById('status-bar').style.background="#333"; 
@@ -733,20 +763,18 @@
         else { 
             document.getElementById('status-bar').textContent = gameMode==='cpu' ? "CPU TURN" : "ENEMY TURN"; 
         } 
-        // Notify new game on init?
-        if(!gameInProgress && gameMode==='p2p') {
-             // Just init text
-        }
     }
 
     // --- SOS ---
     const S_ROWS = 7, S_COLS = 8;
     let sos_board=[], sos_turn=1, sos_myId=1, sos_scores={1:0, 2:0}, sos_sel='S', sos_locked=false;
     
-    function sos_init(mode) {
+    function sos_init(mode, startPlayer = 1) {
         gameMode = mode; 
         sos_board = Array(S_ROWS).fill(null).map(()=>Array(S_COLS).fill(null));
-        sos_locked = false; sos_myId = (mode==='p2p'&&!isHost) ? 2 : 1; sos_turn = 1; 
+        sos_locked = false; sos_myId = (mode==='p2p'&&!isHost) ? 2 : 1; 
+        sos_turn = startPlayer; 
+        currentStarter = startPlayer; // Track for ties
         sos_scores={1:0, 2:0}; sos_sel='S'; gameInProgress = false;
         
         // HIDE PLAY AGAIN BUTTON
@@ -827,6 +855,17 @@
     }
 
     function sos_updStat() {
+        if(!gameInProgress && gameMode === 'p2p') {
+            if(sos_turn === sos_myId) {
+                document.getElementById('status-bar').textContent="New Game Started: YOUR TURN"; 
+                document.getElementById('status-bar').style.background="#005500"; 
+            } else {
+                document.getElementById('status-bar').textContent="New Game Started: OPPONENT TURN"; 
+                document.getElementById('status-bar').style.background="#550000"; 
+            }
+            return;
+        }
+
         if(sos_turn === sos_myId) { document.getElementById('status-bar').textContent = "YOUR TURN"; document.getElementById('status-bar').style.background = "#333"; }
         else { document.getElementById('status-bar').textContent = gameMode==='cpu' ? "CPU TURN" : "OPPONENT TURN"; }
     }
@@ -839,18 +878,23 @@
 
         let myScore = sos_scores[sos_myId];
         let oppScore = sos_scores[sos_myId === 1 ? 2 : 1];
+        let opponentId = sos_myId === 1 ? 2 : 1;
         
         let won = myScore > oppScore;
         let draw = myScore === oppScore;
 
         if(draw) { 
             document.getElementById('status-bar').textContent = "DRAW GAME!"; 
-            document.getElementById('status-bar').style.background = "#555"; 
+            document.getElementById('status-bar').style.background = "#555";
+            nextStarter = currentStarter; 
         }
         else {
             document.getElementById('status-bar').textContent = won ? "VICTORY!" : "DEFEAT!"; 
             document.getElementById('status-bar').style.background = won ? "green" : "#b30000";
             if(gameMode==='cpu') { stats.sos.p++; if(won) stats.sos.w++; localStorage.setItem('sos_played',stats.sos.p); localStorage.setItem('sos_won',stats.sos.w); }
+            
+            // Winner starts next
+            nextStarter = won ? sos_myId : opponentId;
         }
     }
 
@@ -971,12 +1015,10 @@
 
         if (msg.type === 'RESET') {
             if (activeGame === 'gravitrips') {
-                grav_init('p2p');
-                document.getElementById('status-bar').textContent = "NEW GAME STARTED";
+                grav_init('p2p', msg.nextTurn);
             }
             if (activeGame === 'sos') {
-                sos_init('p2p');
-                document.getElementById('status-bar').textContent = "NEW GAME STARTED";
+                sos_init('p2p', msg.nextTurn);
             }
             return;
         }
