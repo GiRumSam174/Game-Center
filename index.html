@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Game Center v7.1</title>
+    <title>Game Center v7.2</title>
     <meta name="theme-color" content="#222">
     <link rel="manifest" href="manifest.json">
     
@@ -214,7 +214,7 @@
     <button class="menu-btn" onclick="launch('battleship')">Battleship</button>
     <button class="menu-btn" onclick="launch('gravitrips')">Gravitrips</button>
     <button class="menu-btn" onclick="launch('sos')">S O S</button>
-    <div style="margin-top:50px; color:#555; font-family:monospace;">v7.1 (PWA)</div>
+    <div style="margin-top:50px; color:#555; font-family:monospace;">v7.2 (Fix)</div>
 </div>
 
 <div id="game-ui" class="hidden" style="width:100%; max-width:1000px; display:flex; flex-direction:column; align-items:center;">
@@ -283,7 +283,7 @@
         <span class="close-btn" onclick="closeModals()">&times;</span>
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #555; padding-bottom:10px; margin-bottom:15px;">
             <h2 style="margin:0; color:#88ccee;">Stats</h2>
-            <span style="font-family:monospace; color:#666;">v7.1</span>
+            <span style="font-family:monospace; color:#666;">v7.2</span>
         </div>
         <div id="stats-area" style="background:#111; padding:10px; margin-bottom:15px;">Stats: 0/0</div>
         <button class="p2p-btn" onclick="openP2P()">Start Multiplayer Game</button>
@@ -812,7 +812,7 @@
         document.getElementById('content-'+t).classList.remove('hidden');
     }
 
-    // --- CLOUD MODE (Updated with STUN Fix) ---
+    // --- CLOUD MODE (Updated with STUN Fix & Race Condition Check) ---
     function cloudHost() {
         const code = Math.floor(1000 + Math.random() * 9000);
         const fullId = 'gc7-' + code;
@@ -823,14 +823,13 @@
         
         isHost = true;
         
-        // STUN/TURN CONFIG FIX
+        // FIX: STUN servers added
         peer = new Peer(fullId, {
             debug: 2,
             config: {
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' },
-                    { urls: 'stun:stun2.l.google.com:19302' }
+                    { urls: 'stun:stun1.l.google.com:19302' }
                 ]
             }
         });
@@ -842,7 +841,9 @@
         peer.on('connection', (c) => {
             conn = c;
             document.getElementById('host-status').textContent = "Player found! Opening secure channel...";
-            setupConnection();
+            // FIX: Check if connection is already open to avoid race condition
+            if(conn.open) { finalSetup(); } 
+            else { conn.on('open', finalSetup); }
         });
         
         peer.on('error', (err) => {
@@ -859,22 +860,25 @@
         isHost = false;
         document.getElementById('join-status').textContent = "Dialing host...";
         
-        // STUN/TURN CONFIG FIX
+        // FIX: STUN servers added
         peer = new Peer(null, {
             debug: 2,
             config: {
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' },
-                    { urls: 'stun:stun2.l.google.com:19302' }
+                    { urls: 'stun:stun1.l.google.com:19302' }
                 ]
             }
         });
 
         peer.on('open', () => {
             document.getElementById('join-status').textContent = "Handshaking...";
-            conn = peer.connect('gc7-' + code, { reliable: true });
-            setupConnection();
+            // FIX: Force JSON serialization and reliable transfer
+            conn = peer.connect('gc7-' + code, { reliable: true, serialization: 'json' });
+            
+            // FIX: Check if connection is already open
+            if(conn.open) { finalSetup(); } 
+            else { conn.on('open', finalSetup); }
         });
         
         peer.on('error', (err) => {
@@ -883,15 +887,23 @@
     }
 
     function setupConnection() {
-        conn.on('open', () => {
-            closeModals();
-            isP2P = true;
-            if(activeGame==='battleship') bs_init('p2p');
-            else if(activeGame==='gravitrips') grav_init('p2p');
-            else sos_init('p2p');
-        });
+        // Redundant catch-all for connection opening
+        conn.on('open', finalSetup);
         conn.on('data', (data) => handleData(data));
         conn.on('close', () => alert("Opponent disconnected"));
+    }
+
+    function finalSetup() {
+        closeModals();
+        isP2P = true;
+        
+        // Ensure data listeners are attached
+        conn.on('data', (data) => handleData(data));
+        conn.on('close', () => alert("Opponent disconnected"));
+
+        if(activeGame==='battleship') bs_init('p2p');
+        else if(activeGame==='gravitrips') grav_init('p2p');
+        else sos_init('p2p');
     }
     
     function p2pSend(data) {
