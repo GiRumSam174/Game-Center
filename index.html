@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Game Center v7.9</title>
+    <title>Game Center v8.1</title>
     <meta name="theme-color" content="#222">
     <link rel="manifest" href="manifest.json">
     
@@ -52,7 +52,7 @@
             font-size: 1rem; font-weight: bold; transition: background-color 0.3s;
         }
 
-        #control-bar { display: flex; gap: 10px; margin-bottom: 5px; justify-content: center; width: 100%; z-index: 100; flex-wrap: wrap; }
+        #control-bar { display: flex; gap: 10px; margin-bottom: 10px; justify-content: center; width: 100%; z-index: 100; flex-wrap: wrap; }
         .mini-btn {
             background-color: #444; color: #ccc; border: 1px solid #555;
             padding: 6px 12px; border-radius: 4px; cursor: pointer;
@@ -143,7 +143,22 @@
         .sos-cell:hover { background: #555; }
         .sos-cell.s-p1, .sos-cell.o-p1 { color: var(--sos-p1); text-shadow: 0 0 5px rgba(255,50,50,0.5); }
         .sos-cell.s-p2, .sos-cell.o-p2 { color: var(--sos-p2); text-shadow: 0 0 5px rgba(255,255,50,0.5); }
-        @media (max-width: 400px) { .sos-cell { width: 32px; height: 32px; font-size: 1.2rem; } }
+        
+        .letter-btn {
+            width: 60px; height: 60px; 
+            border: 2px solid #555; 
+            background: #222; 
+            color: #888; 
+            font-size: 1.5rem; cursor: pointer; 
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .letter-btn.active {
+            border-color: #00ff00 !important;
+            color: #00ff00 !important;
+            background-color: #003300 !important;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+        }
 
         /* --- MODALS (NEW STYLE) --- */
         .modal { position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; }
@@ -183,24 +198,6 @@
         .coffee-btn { display: inline-flex; align-items: center; justify-content: center; background: #FFDD00; color: #000; text-decoration: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; margin-top: 15px; font-size: 0.9rem; }
         .hidden { display: none !important; }
 
-        /* --- VISUAL TWEAK FOR SOS BUTTONS --- */
-        .letter-btn {
-            width: 60px; height: 60px; 
-            border: 2px solid #555; 
-            background: #222; 
-            color: #888; 
-            font-size: 1.5rem; cursor: pointer; 
-            font-weight: bold;
-            transition: all 0.2s;
-        }
-        /* Active State - Strong Highlight */
-        .letter-btn.active {
-            border-color: #00ff00 !important;
-            color: #00ff00 !important;
-            background-color: #003300 !important;
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
-        }
-
         /* --- RESPONSIVE --- */
         @media (orientation: landscape) {
             #notify-row { order: -1; width: 100%; margin-bottom: 2px; }
@@ -232,18 +229,20 @@
     <button class="menu-btn" onclick="launch('battleship')">Battleship</button>
     <button class="menu-btn" onclick="launch('gravitrips')">Gravitrips</button>
     <button class="menu-btn" onclick="launch('sos')">S O S</button>
-    <div style="margin-top:50px; color:#555; font-family:monospace;">v7.9</div>
+    <div style="margin-top:50px; color:#555; font-family:monospace;">v8.1</div>
 </div>
 
 <div id="game-ui" class="hidden" style="width:100%; max-width:1000px; display:flex; flex-direction:column; align-items:center;">
     <h1 id="game-title">GAME TITLE</h1>
-    <div id="status-bar">Initialize Systems...</div>
-
+    
     <div id="control-bar">
-        <button id="opt-btn" class="mini-btn" onclick="openOptions()">OPTIONS</button>
-        <button id="exit-btn" class="mini-btn" onclick="attemptExit()">EXIT</button>
+        <button id="multi-btn" class="mini-btn" onclick="openP2P()">Multiplayer</button>
+        <button id="stats-btn" class="mini-btn" onclick="openStats()">Stats</button>
+        <button id="exit-btn" class="mini-btn" onclick="attemptExit()">Exit</button>
         <button id="reset-game-btn" class="mini-btn primary hidden" onclick="resetCurrentGame()">Play Again</button>
     </div>
+
+    <div id="status-bar">Initialize Systems...</div>
 
     <div id="bs-wrapper" class="hidden">
         <div id="bs-controls-container">
@@ -296,15 +295,15 @@
     </div>
 </div>
 
-<div id="secret-modal" class="modal">
+<div id="stats-modal" class="modal">
     <div class="modal-content">
         <span class="close-btn" onclick="closeModals()">&times;</span>
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #555; padding-bottom:10px; margin-bottom:15px;">
-            <h2 style="margin:0; color:#88ccee;">Options and Stats</h2>
-            <span style="font-family:monospace; color:#666;">v7.9</span>
+            <h2 style="margin:0; color:#88ccee;">Statistics</h2>
+            <span style="font-family:monospace; color:#666;">v8.1</span>
         </div>
-        <div id="stats-area" style="background:#111; padding:10px; margin-bottom:15px;">Stats: 0/0</div>
-        <button class="p2p-btn" onclick="openP2P()">Start Multiplayer Game</button>
+        <div id="stats-content" style="background:#111; padding:15px; margin-bottom:15px; text-align:left; font-family:monospace; font-size:0.9rem; line-height:1.5;">
+            </div>
         <a href="https://www.buymeacoffee.com/classmarks" target="_blank" class="coffee-btn">☕ Buy me a coffee</a>
     </div>
 </div>
@@ -313,6 +312,8 @@
     <div class="modal-content">
         <span class="close-btn" onclick="closeModals()">&times;</span>
         
+        <h2 style="margin:0 0 20px 0; color:#88ccee; border-bottom:1px solid #555; padding-bottom:10px;">Multiplayer</h2>
+
         <div class="tab-row">
             <button class="tab-btn active" id="tab-cloud" onclick="switchTab('cloud')">Easy Connect</button>
             <button class="tab-btn" id="tab-manual" onclick="switchTab('manual')">Manual / QR</button>
@@ -382,15 +383,26 @@
     let audioCtx = null;
     
     // TURN TRACKING
-    let currentStarter = 1; // Who started current game?
-    let nextStarter = 1; // Who will start next game?
+    let currentStarter = 1; 
+    let nextStarter = 1; 
 
-    // View References & Stats
-    const stats = {
-        battleship: { p: parseInt(localStorage.getItem('bs_played')||0), w: parseInt(localStorage.getItem('bs_won')||0) },
-        gravitrips: { p: parseInt(localStorage.getItem('grav_played')||0), w: parseInt(localStorage.getItem('grav_won')||0) },
-        sos: { p: parseInt(localStorage.getItem('sos_played')||0), w: parseInt(localStorage.getItem('sos_won')||0) }
+    // --- STATISTICS MANAGEMENT ---
+    // Structure: gameKey: { cpu: { w, d, p }, p2p: { w, d, l } }
+    const defaultStats = { 
+        cpu: { w: 0, d: 0, p: 0 }, 
+        p2p: { w: 0, d: 0, l: 0 } 
     };
+    
+    // Load or Init Stats
+    let stats = JSON.parse(localStorage.getItem('gc_stats_v8')) || {
+        battleship: JSON.parse(JSON.stringify(defaultStats)),
+        gravitrips: JSON.parse(JSON.stringify(defaultStats)),
+        sos: JSON.parse(JSON.stringify(defaultStats))
+    };
+
+    function saveStats() {
+        localStorage.setItem('gc_stats_v8', JSON.stringify(stats));
+    }
 
     if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(()=>{}); }
 
@@ -407,7 +419,7 @@
         document.getElementById('bs-wrapper').classList.add('hidden');
         document.getElementById('grav-wrapper').classList.add('hidden');
         document.getElementById('sos-wrapper').classList.add('hidden');
-        document.getElementById('reset-game-btn').classList.add('hidden'); // HIDE ON LAUNCH
+        document.getElementById('reset-game-btn').classList.add('hidden'); 
 
         if (game === 'battleship') {
             document.getElementById('game-title').textContent = "BATTLESHIP";
@@ -438,20 +450,39 @@
             if(isP2P) p2pSend({type:'RESET', nextTurn: nextStarter});
             sos_init(gameMode, nextStarter);
         }
+        if (activeGame === 'battleship') {
+            bs_init(gameMode);
+        }
     }
 
-    function openOptions() {
+    function openStats() {
         if (!activeGame || !stats[activeGame]) return;
         let s = stats[activeGame];
-        let pct = s.p > 0 ? Math.round((s.w / s.p) * 100) : 0;
-        document.getElementById('stats-area').textContent = `${activeGame.toUpperCase()} vs CPU: Won ${s.w} / ${s.p} = ${pct}%`;
-        document.getElementById('secret-modal').style.display = 'flex';
+        
+        // Calcs
+        let cpu_l = s.cpu.p - s.cpu.w - s.cpu.d;
+        let cpu_pct = s.cpu.p > 0 ? Math.round((s.cpu.w / s.cpu.p) * 100) + "%" : "--%";
+        
+        let p2p_total = s.p2p.w + s.p2p.d + s.p2p.l;
+        let p2p_pct = p2p_total > 0 ? Math.round((s.p2p.w / p2p_total) * 100) + "%" : "--%";
+
+        let html = `
+            <strong>${activeGame.toUpperCase()}</strong><br><br>
+            <u>VS CPU</u><br>
+            Games won/drawn/lost: ${s.cpu.w} / ${s.cpu.d} / ${cpu_l}<br>
+            Win percentage = ${cpu_pct}<br><br>
+            <u>VS OPPONENT</u><br>
+            Games won/drawn/lost: ${s.p2p.w} / ${s.p2p.d} / ${s.p2p.l}<br>
+            Win percentage = ${p2p_pct}
+        `;
+        
+        document.getElementById('stats-content').innerHTML = html;
+        document.getElementById('stats-modal').style.display = 'flex';
     }
 
     function closeModals() {
         document.querySelectorAll('.modal').forEach(m=>m.style.display='none');
         if(isScanning) toggleScan();
-        // Clean up peer connections if pending
     }
 
     function playSinkSound() {
@@ -662,7 +693,15 @@
         document.getElementById('status-bar').style.background = won ? "green" : "#b30000";
         document.getElementById('bs-reset-btn').classList.remove('hidden'); 
         document.getElementById('bs-controls-container').classList.remove('hidden');
-        if(gameMode==='cpu') { stats.battleship.p++; if(won) stats.battleship.w++; localStorage.setItem('bs_played', stats.battleship.p); localStorage.setItem('bs_won', stats.battleship.w); }
+        
+        // STATS UPDATE
+        if(gameMode === 'cpu') {
+            stats.battleship.cpu.p++;
+            if(won) stats.battleship.cpu.w++;
+        } else {
+            if(won) stats.battleship.p2p.w++; else stats.battleship.p2p.l++;
+        }
+        saveStats();
     }
 
     // --- GRAVITRIPS ---
@@ -734,18 +773,32 @@
             document.getElementById('status-bar').textContent = "DRAW GAME!"; 
             document.getElementById('status-bar').style.background = "#555";
             nextStarter = currentStarter; // Tie = starter goes again
+            
+            // Stats
+            if(gameMode === 'cpu') stats.gravitrips.cpu.d++;
+            else stats.gravitrips.p2p.d++;
         } else {
             document.getElementById('status-bar').textContent = won?"VICTORY!":"DEFEAT!"; 
             document.getElementById('status-bar').style.background = won?"green":"#b30000"; 
-            if(gameMode==='cpu') { stats.gravitrips.p++; if(won) stats.gravitrips.w++; localStorage.setItem('grav_played',stats.gravitrips.p); localStorage.setItem('grav_won',stats.gravitrips.w); } 
             
             // Winner starts next
             nextStarter = won ? grav_myId : opponentId;
+
+            // Stats
+            if(gameMode === 'cpu') {
+                stats.gravitrips.cpu.p++;
+                if(won) stats.gravitrips.cpu.w++;
+            } else {
+                if(won) stats.gravitrips.p2p.w++; else stats.gravitrips.p2p.l++;
+            }
         }
+        
+        if(gameMode === 'cpu' && isDraw) stats.gravitrips.cpu.p++;
+
+        saveStats();
     }
 
     function grav_updStat() { 
-        // Initial Banner Logic for new games
         if(!gameInProgress && gameMode === 'p2p') {
             if(grav_turn === grav_myId) {
                 document.getElementById('status-bar').textContent="New Game Started: YOUR TURN"; 
@@ -762,7 +815,7 @@
             document.getElementById('status-bar').style.background="#333"; 
         } 
         else { 
-            document.getElementById('status-bar').textContent = gameMode==='cpu' ? "CPU TURN" : "ENEMY TURN"; 
+            document.getElementById('status-bar').textContent = gameMode==='cpu' ? "CPU TURN" : "OPPONENT TURN"; 
         } 
     }
 
@@ -778,7 +831,6 @@
         currentStarter = startPlayer; // Track for ties
         sos_scores={1:0, 2:0}; sos_sel='S'; gameInProgress = false;
         
-        // HIDE PLAY AGAIN BUTTON
         document.getElementById('reset-game-btn').classList.add('hidden');
 
         document.getElementById('sos-s1').textContent = "0"; 
@@ -794,11 +846,8 @@
     
     function sos_setLetter(l) { 
         sos_sel = l; 
-        // Force remove active first to ensure clean state
         document.getElementById('btn-s').classList.remove('active');
         document.getElementById('btn-o').classList.remove('active');
-        
-        // Add active to selected
         if(l==='S') document.getElementById('btn-s').classList.add('active');
         else document.getElementById('btn-o').classList.add('active');
     }
@@ -873,8 +922,6 @@
 
     function sos_end() {
         gameInProgress = false;
-        
-        // SHOW PLAY AGAIN BUTTON
         document.getElementById('reset-game-btn').classList.remove('hidden');
 
         let myScore = sos_scores[sos_myId];
@@ -888,15 +935,24 @@
             document.getElementById('status-bar').textContent = "DRAW GAME!"; 
             document.getElementById('status-bar').style.background = "#555";
             nextStarter = currentStarter; 
+            
+            if(gameMode === 'cpu') stats.sos.cpu.d++;
+            else stats.sos.p2p.d++;
         }
         else {
             document.getElementById('status-bar').textContent = won ? "VICTORY!" : "DEFEAT!"; 
             document.getElementById('status-bar').style.background = won ? "green" : "#b30000";
-            if(gameMode==='cpu') { stats.sos.p++; if(won) stats.sos.w++; localStorage.setItem('sos_played',stats.sos.p); localStorage.setItem('sos_won',stats.sos.w); }
-            
-            // Winner starts next
             nextStarter = won ? sos_myId : opponentId;
+
+            if(gameMode === 'cpu') {
+                stats.sos.cpu.p++;
+                if(won) stats.sos.cpu.w++;
+            } else {
+                if(won) stats.sos.p2p.w++; else stats.sos.p2p.l++;
+            }
         }
+        if(gameMode === 'cpu' && draw) stats.sos.cpu.p++;
+        saveStats();
     }
 
     // --- NETWORKING (DUAL MODE: PEERJS + MANUAL) ---
@@ -925,7 +981,6 @@
         document.getElementById('my-room-code').textContent = code;
         isHost = true;
         
-        // FIX: STUN servers added
         peer = new Peer(fullId, {
             debug: 2,
             config: {
@@ -937,14 +992,11 @@
             }
         });
         
-        peer.on('open', (id) => {
-            console.log("Hosted: " + id);
-        });
+        peer.on('open', (id) => { console.log("Hosted: " + id); });
         
         peer.on('connection', (c) => {
             conn = c;
             document.getElementById('host-status').textContent = "Player found! Opening channel...";
-            // FIX: Check if already open to avoid race condition
             if(conn.open) { finalSetup(); } 
             else { conn.on('open', finalSetup); }
         });
@@ -963,7 +1015,6 @@
         isHost = false;
         document.getElementById('join-status').textContent = "Dialing host...";
         
-        // FIX: STUN servers added
         peer = new Peer(null, {
             debug: 2,
             config: {
@@ -977,10 +1028,7 @@
 
         peer.on('open', () => {
             document.getElementById('join-status').textContent = "Handshaking...";
-            // FIX: Force JSON serialization
             conn = peer.connect('gc7-' + code, { reliable: true, serialization: 'json' });
-            
-            // FIX: Check if connection is already open
             if(conn.open) { finalSetup(); } 
             else { conn.on('open', finalSetup); }
             
@@ -989,9 +1037,7 @@
             }, 8000);
         });
         
-        peer.on('error', (err) => {
-            document.getElementById('join-status').textContent = "Connection Failed. Try again.";
-        });
+        peer.on('error', (err) => { document.getElementById('join-status').textContent = "Connection Failed. Try again."; });
     }
 
     function finalSetup() {

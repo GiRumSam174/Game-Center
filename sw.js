@@ -1,4 +1,4 @@
-const CACHE_NAME = 'game-center-v7.9';
+const CACHE_NAME = 'game-center-v8.1';
 const ASSETS = [
   './',
   './index.html',
