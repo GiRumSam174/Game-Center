@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Game Center v9.0</title>
+    <title>Game Center v10.2</title>
     <meta name="theme-color" content="#222">
     <link rel="manifest" href="manifest.json">
     
@@ -261,7 +261,7 @@
     <button class="menu-btn" onclick="launch('gravitrips')">Gravitrips</button>
     <button class="menu-btn" onclick="launch('sos')">S O S</button>
     <button class="menu-btn" onclick="launch('parkour')">Parkour Run</button>
-    <div style="margin-top:50px; color:#555; font-family:monospace;">v9.0</div>
+    <div style="margin-top:50px; color:#555; font-family:monospace;">v10.2</div>
 </div>
 
 <div id="game-ui" class="hidden" style="width:100%; max-width:1000px; display:flex; flex-direction:column; align-items:center;">
@@ -335,7 +335,8 @@
         </div>
         <div id="pk-gameover" class="hidden">
             <h1 class="pk-h1">CRASHED!</h1>
-            <p id="pk-best-display" class="pk-p">Best: 0m</p>
+            <p id="pk-current-display" class="pk-p">Your Run: 0m</p>
+            <p id="pk-best-display" class="pk-p" style="font-size:0.9rem;">Best Run: 0m</p>
         </div>
     </div>
 </div>
@@ -345,7 +346,7 @@
         <span class="close-btn" onclick="closeModals()">&times;</span>
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #555; padding-bottom:10px; margin-bottom:15px;">
             <h2 style="margin:0; color:#88ccee;">Statistics</h2>
-            <span style="font-family:monospace; color:#666;">v9.0</span>
+            <span style="font-family:monospace; color:#666;">v10.2</span>
         </div>
         <div id="stats-content" style="background:#111; padding:15px; margin-bottom:15px; text-align:left; font-family:monospace; font-size:0.9rem; line-height:1.5;">
             </div>
@@ -685,7 +686,6 @@
         gameInProgress = true;
         document.getElementById('reset-game-btn').classList.add('hidden');
         document.getElementById('pk-gameover').classList.add('hidden');
-        document.getElementById('pk-best-display').innerText = `Best: ${stats.parkour.best}m`;
         
         pk_cvs = document.getElementById('parkour-canvas');
         pk_ctx = pk_cvs.getContext('2d');
@@ -709,7 +709,7 @@
         pk_plats = [];
         pk_plats.push({ x: 0, y: pk_cvs.height - 100, w: pk_cvs.width * 3, h: 100 });
         
-        // Input Listeners (Only attach once or manage carefuly)
+        // Input Listeners
         pk_cvs.onmousedown = (e) => { e.preventDefault(); parkour_jump(); };
         pk_cvs.ontouchstart = (e) => { e.preventDefault(); parkour_jump(); };
         
@@ -844,7 +844,12 @@
             stats.parkour.best = final;
             saveStats();
         }
+        
+        // --- ADDED SCORE DISPLAY ---
+        document.getElementById('pk-current-display').innerText = `Your Run: ${final}m`;
         document.getElementById('pk-best-display').innerText = `Best Run: ${stats.parkour.best}m`;
+        // ---------------------------
+
         document.getElementById('pk-gameover').classList.remove('hidden');
         document.getElementById('reset-game-btn').classList.remove('hidden');
     }
