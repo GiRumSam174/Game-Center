@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Game Center v8.4</title>
+    <title>Game Center v9.0</title>
     <meta name="theme-color" content="#222">
     <link rel="manifest" href="manifest.json">
     
@@ -163,6 +163,33 @@
             box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
         }
 
+        /* --- PARKOUR --- */
+        #parkour-wrapper {
+            position: relative; width: 100%; height: 60vh; background: #dcdcdc; 
+            overflow: hidden; border: 2px solid #555; border-radius: 4px;
+        }
+        #parkour-canvas { display: block; width: 100%; height: 100%; }
+        #pk-ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; display: flex; flex-direction: column; justify-content: space-between;
+        }
+        #pk-score {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.5rem; font-weight: bold; color: #111; margin: 20px;
+            text-shadow: 2px 2px 0px #fff;
+        }
+        #pk-hint {
+            text-align: center; color: rgba(0,0,0,0.4); font-family: 'Courier New', monospace;
+            font-size: 1rem; margin-bottom: 20px; animation: pulse 2s infinite;
+        }
+        #pk-gameover {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.95); z-index: 10;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .pk-h1 { font-family: 'Courier New', monospace; font-size: 2.5rem; text-transform: uppercase; letter-spacing: -3px; font-weight: 900; color: #000; margin: 0; }
+        .pk-p { font-family: 'Courier New', monospace; color: #555; font-size: 1.2rem; margin-bottom: 30px; }
+
         /* --- MODALS --- */
         .modal { position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; }
         
@@ -205,6 +232,7 @@
         @media (orientation: landscape) {
             #notify-row { order: -1; width: 100%; margin-bottom: 2px; }
             #bs-game-area { justify-content: space-evenly; }
+            #parkour-wrapper { height: 75vh; }
         }
         @media (orientation: portrait) {
             #bs-game-area { flex-direction: column; align-items: center; }
@@ -232,7 +260,8 @@
     <button class="menu-btn" onclick="launch('battleship')">Battleship</button>
     <button class="menu-btn" onclick="launch('gravitrips')">Gravitrips</button>
     <button class="menu-btn" onclick="launch('sos')">S O S</button>
-    <div style="margin-top:50px; color:#555; font-family:monospace;">v8.4</div>
+    <button class="menu-btn" onclick="launch('parkour')">Parkour Run</button>
+    <div style="margin-top:50px; color:#555; font-family:monospace;">v9.0</div>
 </div>
 
 <div id="game-ui" class="hidden" style="width:100%; max-width:1000px; display:flex; flex-direction:column; align-items:center;">
@@ -297,6 +326,18 @@
         </div>
         <div id="sos-grid" class="sos-grid"></div>
     </div>
+
+    <div id="parkour-wrapper" class="hidden">
+        <canvas id="parkour-canvas"></canvas>
+        <div id="pk-ui-layer">
+            <div id="pk-score">0m</div>
+            <div id="pk-hint">Tap to Jump • Double Tap Flip</div>
+        </div>
+        <div id="pk-gameover" class="hidden">
+            <h1 class="pk-h1">CRASHED!</h1>
+            <p id="pk-best-display" class="pk-p">Best: 0m</p>
+        </div>
+    </div>
 </div>
 
 <div id="stats-modal" class="modal">
@@ -304,7 +345,7 @@
         <span class="close-btn" onclick="closeModals()">&times;</span>
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #555; padding-bottom:10px; margin-bottom:15px;">
             <h2 style="margin:0; color:#88ccee;">Statistics</h2>
-            <span style="font-family:monospace; color:#666;">v8.4</span>
+            <span style="font-family:monospace; color:#666;">v9.0</span>
         </div>
         <div id="stats-content" style="background:#111; padding:15px; margin-bottom:15px; text-align:left; font-family:monospace; font-size:0.9rem; line-height:1.5;">
             </div>
@@ -402,8 +443,12 @@
     let stats = JSON.parse(localStorage.getItem('gc_stats_v8')) || {
         battleship: JSON.parse(JSON.stringify(defaultStats)),
         gravitrips: JSON.parse(JSON.stringify(defaultStats)),
-        sos: JSON.parse(JSON.stringify(defaultStats))
+        sos: JSON.parse(JSON.stringify(defaultStats)),
+        parkour: { best: 0 } // Add Parkour stats structure
     };
+    
+    // Ensure Parkour stats exist if upgrading from v8
+    if(!stats.parkour) stats.parkour = { best: 0 };
 
     function saveStats() {
         localStorage.setItem('gc_stats_v8', JSON.stringify(stats));
@@ -472,8 +517,7 @@
         }
 
         // TADAH (Victory)
-        if(type === 'tadah') { // Renamed from grav-win
-            // Function to play one note
+        if(type === 'tadah') { 
             const p = (freq, start, dur) => {
                 const o = audioCtx.createOscillator();
                 const g = audioCtx.createGain();
@@ -510,7 +554,7 @@
         }
 
         // SAD TROMBONE (Lose)
-        if(type === 'sad-trombone') { // Renamed from bs-lose
+        if(type === 'sad-trombone') { 
             const pWah = (freq, start, dur, slide) => {
                 const o = audioCtx.createOscillator();
                 const g = audioCtx.createGain();
@@ -539,7 +583,7 @@
 
     // --- MAIN LAUNCHER ---
     function launch(game) {
-        initAudio(); // Trigger audio context unlock
+        initAudio(); 
         activeGame = game;
         document.getElementById('start-menu').style.display = 'none';
         document.getElementById('game-ui').classList.remove('hidden');
@@ -551,7 +595,9 @@
         document.getElementById('bs-wrapper').classList.add('hidden');
         document.getElementById('grav-wrapper').classList.add('hidden');
         document.getElementById('sos-wrapper').classList.add('hidden');
+        document.getElementById('parkour-wrapper').classList.add('hidden');
         document.getElementById('reset-game-btn').classList.add('hidden'); 
+        document.getElementById('multi-btn').style.display = 'flex'; // Default show
 
         if (game === 'battleship') {
             document.getElementById('game-title').textContent = "BATTLESHIP";
@@ -565,6 +611,12 @@
             document.getElementById('game-title').textContent = "SOS";
             document.getElementById('sos-wrapper').classList.remove('hidden');
             sos_init('cpu');
+        } else if (game === 'parkour') {
+            document.getElementById('game-title').textContent = "PARKOUR RUN";
+            document.getElementById('parkour-wrapper').classList.remove('hidden');
+            document.getElementById('multi-btn').style.display = 'none'; // No P2P for Parkour
+            document.getElementById('status-bar').textContent = "Single Player Mode";
+            parkour_init();
         }
     }
 
@@ -586,28 +638,36 @@
         if (activeGame === 'battleship') {
             bs_init(gameMode);
         }
+        if (activeGame === 'parkour') {
+            parkour_init();
+        }
     }
 
     function openStats() {
         if (!activeGame || !stats[activeGame]) return;
         let s = stats[activeGame];
-        
-        // Calcs
-        let cpu_l = s.cpu.p - s.cpu.w - s.cpu.d;
-        let cpu_pct = s.cpu.p > 0 ? Math.round((s.cpu.w / s.cpu.p) * 100) + "%" : "--%";
-        
-        let p2p_total = s.p2p.w + s.p2p.d + s.p2p.l;
-        let p2p_pct = p2p_total > 0 ? Math.round((s.p2p.w / p2p_total) * 100) + "%" : "--%";
+        let html = '';
 
-        let html = `
-            <strong>${activeGame.toUpperCase()}</strong><br><br>
-            <u>VS CPU</u><br>
-            Games won/drawn/lost: ${s.cpu.w} / ${s.cpu.d} / ${cpu_l}<br>
-            Win percentage = ${cpu_pct}<br><br>
-            <u>VS OPPONENT</u><br>
-            Games won/drawn/lost: ${s.p2p.w} / ${s.p2p.d} / ${s.p2p.l}<br>
-            Win percentage = ${p2p_pct}
-        `;
+        if(activeGame === 'parkour') {
+            html = `<strong>PARKOUR RUN</strong><br><br>Best Run: ${s.best}m`;
+        } else {
+            // Calcs
+            let cpu_l = s.cpu.p - s.cpu.w - s.cpu.d;
+            let cpu_pct = s.cpu.p > 0 ? Math.round((s.cpu.w / s.cpu.p) * 100) + "%" : "--%";
+            
+            let p2p_total = s.p2p.w + s.p2p.d + s.p2p.l;
+            let p2p_pct = p2p_total > 0 ? Math.round((s.p2p.w / p2p_total) * 100) + "%" : "--%";
+
+            html = `
+                <strong>${activeGame.toUpperCase()}</strong><br><br>
+                <u>VS CPU</u><br>
+                Games won/drawn/lost: ${s.cpu.w} / ${s.cpu.d} / ${cpu_l}<br>
+                Win percentage = ${cpu_pct}<br><br>
+                <u>VS OPPONENT</u><br>
+                Games won/drawn/lost: ${s.p2p.w} / ${s.p2p.d} / ${s.p2p.l}<br>
+                Win percentage = ${p2p_pct}
+            `;
+        }
         
         document.getElementById('stats-content').innerHTML = html;
         document.getElementById('stats-modal').style.display = 'flex';
@@ -616,6 +676,177 @@
     function closeModals() {
         document.querySelectorAll('.modal').forEach(m=>m.style.display='none');
         if(isScanning) toggleScan();
+    }
+
+    // --- PARKOUR LOGIC ---
+    let pk_cvs, pk_ctx, pk_player, pk_plats, pk_score, pk_speed, pk_gravity, pk_lastTime;
+    
+    function parkour_init() {
+        gameInProgress = true;
+        document.getElementById('reset-game-btn').classList.add('hidden');
+        document.getElementById('pk-gameover').classList.add('hidden');
+        document.getElementById('pk-best-display').innerText = `Best: ${stats.parkour.best}m`;
+        
+        pk_cvs = document.getElementById('parkour-canvas');
+        pk_ctx = pk_cvs.getContext('2d');
+        
+        // Resize canvas to wrapper
+        const wrap = document.getElementById('parkour-wrapper');
+        pk_cvs.width = wrap.clientWidth;
+        pk_cvs.height = wrap.clientHeight;
+
+        // Reset Vars
+        pk_score = 0;
+        pk_speed = 7;
+        pk_gravity = 0.6;
+        pk_lastTime = performance.now();
+        
+        pk_player = {
+            x: 100, y: pk_cvs.height / 2, vy: 0, width: 20, height: 60,
+            grounded: false, jumpCount: 0, color: '#111', runFrame: 0
+        };
+        
+        pk_plats = [];
+        pk_plats.push({ x: 0, y: pk_cvs.height - 100, w: pk_cvs.width * 3, h: 100 });
+        
+        // Input Listeners (Only attach once or manage carefuly)
+        pk_cvs.onmousedown = (e) => { e.preventDefault(); parkour_jump(); };
+        pk_cvs.ontouchstart = (e) => { e.preventDefault(); parkour_jump(); };
+        
+        requestAnimationFrame(parkour_loop);
+    }
+
+    function parkour_jump() {
+        if (activeGame !== 'parkour' || !gameInProgress) return;
+        if (pk_player.grounded) {
+            pk_player.vy = -13; 
+            pk_player.grounded = false;
+            pk_player.jumpCount = 1;
+        } else if (pk_player.jumpCount < 2) {
+            pk_player.vy = -11;
+            pk_player.jumpCount = 2;
+            pk_player.runFrame = 0; 
+        }
+    }
+
+    function parkour_loop(timestamp) {
+        if (activeGame !== 'parkour' || !gameInProgress) return;
+
+        const dt = (timestamp - pk_lastTime) / 1000;
+        pk_lastTime = timestamp;
+
+        if (dt > 0.1) { requestAnimationFrame(parkour_loop); return; } // Pause protection
+
+        pk_ctx.fillStyle = "#dcdcdc"; pk_ctx.fillRect(0, 0, pk_cvs.width, pk_cvs.height);
+
+        // Update Score
+        pk_score += pk_speed * dt * 3;
+        document.getElementById('pk-score').innerText = Math.floor(pk_score) + "m";
+        if (pk_speed < 16) pk_speed += 0.1 * dt;
+
+        // Physics
+        const timeScale = dt / (1/60);
+        pk_player.vy += pk_gravity * timeScale;
+        pk_player.y += pk_player.vy * timeScale;
+        pk_player.grounded = false;
+
+        // Platform Gen
+        if (pk_plats.length < 5) {
+            const last = pk_plats[pk_plats.length - 1];
+            const minGap = 120, maxGap = 280 + (pk_speed * 4);
+            const gap = Math.floor(Math.random() * (maxGap - minGap + 1) + minGap);
+            let ny = last.y + (Math.random() * 120 - 60);
+            if (ny > pk_cvs.height - 60) ny = pk_cvs.height - 60;
+            if (ny < pk_cvs.height / 2.5) ny = pk_cvs.height / 2.5;
+            const w = Math.floor(Math.random() * 400 + 150);
+            pk_plats.push({ x: last.x + last.w + gap, y: ny, w: w, h: 100 });
+        }
+        if (pk_plats[0].x + pk_plats[0].w < 0) pk_plats.shift();
+
+        // Draw & Collide Platforms
+        pk_ctx.fillStyle = "#222";
+        pk_plats.forEach(p => {
+            p.x -= pk_speed * timeScale;
+            pk_ctx.fillRect(p.x, p.y, p.w, p.h);
+            
+            if (pk_player.vy >= 0 && pk_player.y + 60 > p.y && pk_player.y - 20 < p.y + p.h && 
+                pk_player.x + 10 > p.x && pk_player.x - 10 < p.x + p.w) {
+                if (pk_player.y + 60 < p.y + 40) { 
+                    pk_player.y = p.y - 60; pk_player.vy = 0; pk_player.grounded = true; pk_player.jumpCount = 0;
+                    if(pk_player.jumpCount === 2) pk_player.runFrame = 0;
+                }
+            }
+        });
+
+        // Draw Player
+        parkour_draw_player(pk_player.x, pk_player.y + 30, dt);
+
+        if (pk_player.y > pk_cvs.height) parkour_gameOver();
+        else requestAnimationFrame(parkour_loop);
+    }
+
+    function parkour_draw_player(x, y, dt) {
+        pk_ctx.strokeStyle = pk_player.color;
+        pk_ctx.lineWidth = 5;
+        pk_ctx.lineCap = 'round';
+        pk_ctx.lineJoin = 'round';
+
+        let animRate = (12 + (pk_speed * 0.5)); 
+        
+        if (pk_player.grounded) pk_player.runFrame += animRate * dt;
+        else {
+            if (pk_player.jumpCount === 2) {
+                pk_player.runFrame += 20 * dt; 
+                pk_ctx.save(); pk_ctx.translate(x, y); pk_ctx.rotate(pk_player.runFrame); pk_ctx.translate(-x, -y);
+            } else pk_player.runFrame = 0.8; 
+        }
+
+        // Body
+        let torsoAngle = 0.3;
+        const headX = x + Math.sin(torsoAngle) * 25;
+        const headY = y - Math.cos(torsoAngle) * 25;
+        pk_ctx.beginPath(); pk_ctx.moveTo(x, y); pk_ctx.lineTo(headX, headY); pk_ctx.stroke();
+        pk_ctx.beginPath(); pk_ctx.arc(headX + 2, headY - 8, 7, 0, Math.PI * 2); pk_ctx.fill(); 
+
+        const seg = (x1, y1, ang, len) => {
+            const x2 = x1 + Math.sin(ang) * len, y2 = y1 + Math.cos(ang) * len;
+            pk_ctx.beginPath(); pk_ctx.moveTo(x1, y1); pk_ctx.lineTo(x2, y2); pk_ctx.stroke();
+            return {x:x2, y:y2};
+        };
+
+        // Legs
+        let rCycle = pk_player.runFrame, lCycle = pk_player.runFrame + Math.PI; 
+        let rTh = Math.sin(rCycle)*1.1+0.1, lTh = Math.sin(lCycle)*1.1+0.1;
+        let rBd = Math.max(0,Math.cos(rCycle)*2)+0.2, lBd = Math.max(0,Math.cos(lCycle)*2)+0.2;
+        
+        if(!pk_player.grounded && pk_player.jumpCount!==2) { rTh=1.2; rBd=0.7; lTh=-0.5; lBd=0; }
+
+        let rK = seg(x, y, rTh, 18); seg(rK.x, rK.y, rTh-rBd, 20);
+        let lK = seg(x, y, lTh, 18); seg(lK.x, lK.y, lTh-lBd, 20);
+
+        // Arms
+        let rAB = Math.sin(lCycle), lAB = Math.sin(rCycle);
+        let rAA = rAB*0.9-0.3, lAA = lAB*0.9-0.3;
+        let rEB = 1.3+(rAB*0.6), lEB = 1.3+(lAB*0.6);
+
+        if(!pk_player.grounded && pk_player.jumpCount!==2) { rAA=-2.5; rEB=0.5; lAA=-2.0; lEB=0.5; }
+
+        let rE = seg(headX, headY, rAA, 15); seg(rE.x, rE.y, rAA+rEB, 15);
+        let lE = seg(headX, headY, lAA, 15); seg(lE.x, lE.y, lAA+lEB, 15);
+
+        if (!pk_player.grounded && pk_player.jumpCount === 2) pk_ctx.restore();
+    }
+
+    function parkour_gameOver() {
+        gameInProgress = false;
+        let final = Math.floor(pk_score);
+        if(final > stats.parkour.best) {
+            stats.parkour.best = final;
+            saveStats();
+        }
+        document.getElementById('pk-best-display').innerText = `Best Run: ${stats.parkour.best}m`;
+        document.getElementById('pk-gameover').classList.remove('hidden');
+        document.getElementById('reset-game-btn').classList.remove('hidden');
     }
 
     // --- BATTLESHIP LOGIC ---

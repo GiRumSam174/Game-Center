@@ -1,4 +1,4 @@
-const CACHE_NAME = 'game-center-v8.4';
+const CACHE_NAME = 'game-center-v9.0';
 const ASSETS = [
   './',
   './index.html',
@@ -8,15 +8,17 @@ const ASSETS = [
   'https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js',
   'https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js'
 ];
-// ... keep the rest of the file exactly as before ...
+
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
 });
+
 self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys().then((keys) => Promise.all(keys.map((k) => {
       if (k !== CACHE_NAME) return caches.delete(k);
   }))));
 });
+
 self.addEventListener('fetch', (e) => {
   e.respondWith(caches.match(e.request).then((cached) => cached || fetch(e.request)));
 });
